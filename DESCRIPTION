@@ -1,0 +1,43 @@
+Package: bigbang
+Type: Package
+Title: Build 'Tidyverse'-Style Meta-Packages from Local Package Files
+Version: 0.1.0
+Authors@R: c(
+    person(given = "Sebastian",
+           family = "Lucas",
+           role = c("aut", "cre"),
+           email = "sebalucas@gmail.com"),
+    person(given = "Richard",
+           family = "Detomasi",
+           role = "ctb",
+           email = "richard.detomasi@gmail.com",
+           comment = c(
+               ORCID = "0000-0002-6725-0261",
+               "Suggested the initial idea of a metapackage builder")))
+Description: Creates meta-packages (in the style of the 'tidyverse') from
+    locally stored package archives (.tar.gz, .zip). Designed for teams
+    working behind institutional firewalls without access to package
+    repositories. Resolves dependencies between local packages by building
+    a dependency graph with topological ordering and cycle detection,
+    classifies dependencies as local or CRAN, detects implicit dependencies
+    by scanning source code, and generates the full meta-package scaffold
+    including re-exports, vignettes and documentation.
+License: GPL (>= 3)
+URL: https://github.com/sebollin/bigbang
+BugReports: https://github.com/sebollin/bigbang/issues
+Encoding: UTF-8
+Language: en
+VignetteBuilder: knitr
+Depends: R (>= 3.6.0)
+Imports: brio, glue, utils, whisker
+Suggests: devtools, knitr, rmarkdown, testthat (>= 3.0.0), withr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
+NeedsCompilation: no
+Packaged: 2026-08-03 16:20:59 UTC; user
+Author: Sebastian Lucas [aut, cre],
+  Richard Detomasi [ctb] (ORCID: <https://orcid.org/0000-0002-6725-0261>,
+    Suggested the initial idea of a metapackage builder)
+Maintainer: Sebastian Lucas <sebalucas@gmail.com>
+Repository: CRAN
+Date/Publication: 2026-08-08 12:50:11 UTC
