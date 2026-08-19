@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: bigbang 0.1.0\n"
+"Project-Id-Version: bigbang 0.4.0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -16,13 +16,112 @@ msgstr ""
 msgid "'pkg_dir' must be one character string"
 msgstr ""
 
+msgid "'pkg_dir' must contain one or more non-empty paths"
+msgstr ""
+
+msgid "Each component must be one non-empty archive path or stem"
+msgstr ""
+
+msgid "Could not resolve component '%s': it is not an existing file and no 'pkg_dir' was supplied."
+msgstr ""
+
+msgid "Could not resolve component '%s' in the supplied archive directories."
+msgstr ""
+
+msgid "Package archive does not exist: %s; archives were not found in the supplied archive directories: %s."
+msgstr ""
+
+msgid "The archive directory does not exist: %s"
+msgstr ""
+
 msgid "The directory specified by 'pkg_dir' does not exist"
 msgstr ""
 
 msgid "'dest_dir' must be supplied as one non-empty path: the meta-package is written inside it. Use tempdir() for disposable output."
 msgstr ""
 
+msgid "'workflow' must map unique non-empty stage names to every component package exactly once"
+msgstr ""
+
+msgid "'tolerate' must be a character vector of named relaxations"
+msgstr ""
+
+msgid "Unknown tolerance(s): %s. Supported values are: %s."
+msgstr ""
+
 msgid "Unsupported archive extension: %s"
+msgstr ""
+
+msgid "Package archive does not exist: %s"
+msgstr ""
+
+msgid "Could not create temporary directory for %s"
+msgstr ""
+
+msgid "Could not extract archive %s: %s"
+msgstr ""
+
+msgid "Could not extract archive %s: could not create temporary directory."
+msgstr ""
+
+msgid "Could not extract archive %s: extraction returned status %d."
+msgstr ""
+
+msgid "Could not read archive %s; excluding it from the archive inventory: %s"
+msgstr ""
+
+msgid "Component %s declares dependency %s, but archive %s could not be read and was excluded from the inventory: %s"
+msgstr ""
+
+msgid "Archive %s must contain one package root directory."
+msgstr ""
+
+msgid "Archive %s has no DESCRIPTION at the package root."
+msgstr ""
+
+msgid "Archive %s contains symbolic links, which are not supported."
+msgstr ""
+
+msgid "Component %s requires %s %s %s, but the included archive provides version %s."
+msgstr ""
+
+msgid "Component %s declares dependency %s, available as %s in pkg_dir but not included. Add it to packages or remove the dependency."
+msgstr ""
+
+msgid "Component %s declares R constraint %s %s; only >= and > constraints are propagated."
+msgstr ""
+
+msgid "Component %s declares an invalid R version constraint: %s %s."
+msgstr ""
+
+msgid "Could not parse R source file: %s"
+msgstr ""
+
+msgid "Expected one DESCRIPTION in %s; found %d."
+msgstr ""
+
+msgid "Archive %s must declare non-empty Package and Version fields."
+msgstr ""
+
+msgid "Archive %s declares package %s, but its filename names %s."
+msgstr ""
+
+msgid "Archive %s declares version %s, but its filename names version %s."
+msgstr ""
+
+msgid "Archive %s declares package %s, but its filename suggests %s."
+msgstr ""
+
+msgid "Archive %s declares version %s, but its filename suggests version %s."
+msgstr ""
+
+msgid "More than one archive was supplied for component package(s): %s."
+msgstr ""
+
+msgid "More than one archive was found for component stem '%s': %s."
+msgstr ""
+
+msgid "Circular dependencies detected: %s. A clean installation has no valid topological order."
 msgstr ""
 
 msgid "No DESCRIPTION file found in package %s"
@@ -43,13 +142,25 @@ msgstr ""
 msgid "Error processing package %s: %s"
 msgstr ""
 
-msgid "No component packages are installed; re-exports were not generated."
+msgid "'reexport' must be TRUE or FALSE"
 msgstr ""
 
-msgid "No functions were found to re-export."
+msgid "Could not read NAMESPACE from archive %s: the file is missing."
 msgstr ""
 
-msgid "Re-export file created with %d functions from %d packages."
+msgid "Could not read NAMESPACE from archive %s: %s"
+msgstr ""
+
+msgid "Could not determine explicit exports in NAMESPACE from archive %s: export patterns are not supported for reexport."
+msgstr ""
+
+msgid "Could not read explicit exports from NAMESPACE in archive %s."
+msgstr ""
+
+msgid "Cannot re-export symbol(s) %s because components collide: %s."
+msgstr ""
+
+msgid "Cannot re-export symbol(s) %s because they belong to generated metapackage code."
 msgstr ""
 
 msgid "SAFETY: Path is too short and may be dangerous: %s"
@@ -67,13 +178,7 @@ msgstr ""
 msgid "Could not remove completely: %s"
 msgstr ""
 
-msgid "Current directory (%s) does not match project directory (%s)."
-msgstr ""
-
-msgid "Temporarily changed directory to: %s"
-msgstr ""
-
-msgid "The DESCRIPTION file does not exist in the current directory."
+msgid "The DESCRIPTION file does not exist in the project directory."
 msgstr ""
 
 msgid "DESCRIPTION updated with a valid Suggests field"
@@ -89,6 +194,9 @@ msgid "Error creating basic vignette: %s"
 msgstr ""
 
 msgid "Package name '%s' contains underscores, which R package names do not allow. Use '%s' instead."
+msgstr ""
+
+msgid "Package name '%s' is not a valid R package name: use at least two characters, start with a letter, continue with letters, digits or dots, and do not end with a dot."
 msgstr ""
 
 msgid "For safety, the destination must be new or empty: %s. Generate into a new empty path; never regenerate an existing source in place."
@@ -154,28 +262,91 @@ msgstr ""
 msgid "The template rendered empty content."
 msgstr ""
 
-msgid "\\nOriginal template:"
+msgid "Original template:"
 msgstr ""
 
-msgid "\\nTemplate data:"
+msgid "Template data:"
 msgstr ""
 
 msgid "%s.R already exists and will not be overwritten."
 msgstr ""
 
-msgid "The ZIP archive does not contain a DESCRIPTION file: "
+msgid "The ZIP archive does not contain a DESCRIPTION file: %s"
 msgstr ""
 
-msgid "Unsupported archive format: "
+msgid "Unsupported archive format: %s"
 msgstr ""
 
-msgid "Installed local package: "
+msgid "Installed local package: %s"
 msgstr ""
 
-msgid "Packages that failed: "
+msgid "Installed local package: %s from %s"
 msgstr ""
 
-msgid "Packages skipped by the offline policy: "
+msgid "Package %s has installed version %s, newer than archive version %s; keeping the installed version."
+msgstr ""
+
+msgid "Package %s has installed version %s and archive version %s; keeping the installed version."
+msgstr ""
+
+msgid "Packages that failed: %s"
+msgstr ""
+
+msgid "Packages skipped by the offline policy: %s"
+msgstr ""
+
+msgid "'force' must be TRUE or FALSE"
+msgstr ""
+
+msgid "'include_archives' must be TRUE or FALSE"
+msgstr ""
+
+msgid "Component archives copied into the meta-package: %s (%.1f MB)."
+msgstr ""
+
+msgid "Package name '%s' belongs to R itself and cannot be reused."
+msgstr ""
+
+msgid "Could not copy the component archives into the meta-package: %s"
+msgstr ""
+
+msgid "Cannot use component archives with the same basename (%s): %s."
+msgstr ""
+
+msgid "Component %s declares dependency %s, available at %s but not included. Add it to packages or remove the dependency."
+msgstr ""
+
+msgid "The generated meta-package will not ship %s; the recipient must provide it through pkg_dir or a repository with cran_deps = 'install'."
+msgstr ""
+
+msgid "This meta-package needs the following archive directories on the recipient: %s. Set include_archives = TRUE to avoid this requirement."
+msgstr ""
+
+msgid "'force = TRUE' conflicts with an explicit upgrade policy other than 'always'"
+msgstr ""
+
+msgid "Kept installed version %s because upgrade = 'never'; the archive names version %s"
+msgstr ""
+
+msgid "Kept installed version %s, newer than archive version %s"
+msgstr ""
+
+msgid "Kept installed version %s, matching archive version %s"
+msgstr ""
+
+msgid "Kept installed version %s; %s"
+msgstr ""
+
+msgid "Package %s is already installed; %s"
+msgstr ""
+
+msgid "the archive was not read because upgrade = 'never'"
+msgstr ""
+
+msgid "archive metadata could not be verified: %s"
+msgstr ""
+
+msgid "Use force = TRUE or upgrade = 'always' to reinstall unchanged packages: %s"
 msgstr ""
 
 msgid "'path' must be one non-empty character string."
@@ -184,19 +355,19 @@ msgstr ""
 msgid "Only read-only scanning is supported; 'dry_run' must remain TRUE."
 msgstr ""
 
-msgid "Artifact does not exist: "
+msgid "Artifact does not exist: %s"
 msgstr ""
 
-msgid "Unsupported artifact type: "
+msgid "Unsupported artifact type: %s"
 msgstr ""
 
-msgid "No DESCRIPTION found in source directory: "
+msgid "No DESCRIPTION found in source directory: %s"
 msgstr ""
 
 msgid "Refusing to scan symbolic links in the source R directory."
 msgstr ""
 
-msgid "Archive contains unsafe absolute or parent-traversal paths: "
+msgid "Archive contains unsafe absolute or parent-traversal paths: %s"
 msgstr ""
 
 msgid "Refusing to scan an archive containing symbolic links."
@@ -212,4 +383,73 @@ msgid "Installed package has no valid Package field."
 msgstr ""
 
 msgid "Could not identify the installed lazy-load database."
+msgstr ""
+
+msgid "The component manifest does not list any packages."
+msgstr ""
+
+msgid "Component directories require the 'pkgbuild' package. Install 'pkgbuild' or pass a built archive instead."
+msgstr ""
+
+msgid "Could not build component source directory %s: %s"
+msgstr ""
+
+msgid "Could not find the archive built from component directory %s."
+msgstr ""
+
+msgid "Cannot update %s because it has no valid bigbang generation manifest."
+msgstr ""
+
+msgid "Cannot update %s because generated files were modified or removed: %s."
+msgstr ""
+
+msgid "Cannot update a project that does not exist or has no bigbang generation manifest."
+msgstr ""
+
+msgid "The installation library must be one non-empty path."
+msgstr ""
+
+msgid "Could not create installation library: %s"
+msgstr ""
+
+msgid "'only' must contain component package names."
+msgstr ""
+
+msgid "Unknown component(s) in 'only': %s."
+msgstr ""
+
+msgid "Added local dependencies of selected components: %s"
+msgstr ""
+
+msgid "Source directory components require include_archives = TRUE because their temporary build archive cannot be reused."
+msgstr ""
+
+msgid "Cannot update %s because requested generated files are not in its manifest: %s."
+msgstr ""
+
+msgid "Cannot update %s because generated path components are symbolic links: %s. Refusing to write outside the project."
+msgstr ""
+
+msgid "Generated files were not written as planned: %s"
+msgstr ""
+
+msgid "Could not back up generated file: %s"
+msgstr ""
+
+msgid "Could not restore generated files after a failed update: %s"
+msgstr ""
+
+msgid "The update backup was retained for manual recovery at: %s"
+msgstr ""
+
+msgid "Removing generated files no longer in the plan: %s"
+msgstr ""
+
+msgid "Component archive %s could not be read; skip propagation uses filename-derived name '%s'; dependents may fail on the recipient if that name differs from Package."
+msgstr ""
+
+msgid "Component package '%s' is not installed."
+msgstr ""
+
+msgid "Runtime re-export bindings are read-only."
 msgstr ""

@@ -27,6 +27,15 @@ print.bigbang_result <- function(x, ...) {
   cat("  Package: ", x$name, "\n", sep = "")
   cat("  Path: ", x$path, "\n", sep = "")
   cat("  Components: ", paste(x$packages, collapse = ", "), "\n", sep = "")
+  if (isTRUE(x$dry_run)) cat("  Mode: dry run (no files written)\n")
+  if (isTRUE(x$updated)) cat("  Mode: updated from generation manifest\n")
+  if (length(x$removed_files) > 0L) {
+    label <- if (isTRUE(x$dry_run)) "  Would remove: " else "  Removed: "
+    cat(label, paste(x$removed_files, collapse = ", "), "\n", sep = "")
+  }
+  if (is.data.frame(x$omitted) && nrow(x$omitted) > 0L) {
+    cat("  Omitted: ", paste(x$omitted$component, collapse = ", "), "\n", sep = "")
+  }
   if (length(x$cran_dependencies) > 0L) {
     cat("  Non-local dependencies: ",
         paste(x$cran_dependencies, collapse = ", "), "\n", sep = "")
@@ -43,6 +52,7 @@ print.bigbang_result <- function(x, ...) {
 print.bigbang_install_result <- function(x, ...) {
   cat("<bigbang local installation>\n")
   cat("  Installed: ", length(x$installed), "\n", sep = "")
+  cat("  Unchanged: ", length(x$unchanged), "\n", sep = "")
   cat("  Failed: ", length(x$failed), "\n", sep = "")
   cat("  Skipped: ", length(x$skipped), "\n", sep = "")
   invisible(x)

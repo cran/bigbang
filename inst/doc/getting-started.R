@@ -59,7 +59,7 @@ stopifnot(!scan$vulnerable)
 # system2(file.path(R.home("bin"), "R"), c("CMD", "build", result$path))
 # install.packages("toyverse_0.1.0.tar.gz", repos = NULL, type = "source")
 # library(toyverse)
-# toyverse_install(cran_deps = "skip")
+# toyverse_install()
 
 ## ----cleanup, include = FALSE-------------------------------------------------
 unlink(root, recursive = TRUE)

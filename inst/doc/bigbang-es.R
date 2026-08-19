@@ -14,7 +14,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 
 ## ----eval = FALSE-------------------------------------------------------------
 # library(equipoverse)
-# equipoverse_install(cran_deps = "skip")
+# equipoverse_install()
 
 ## ----eval = FALSE-------------------------------------------------------------
 # scan_bigbang_artifact("ruta/al/artefacto", dry_run = TRUE)

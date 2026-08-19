@@ -50,11 +50,11 @@ scan_bigbang_artifact <- function(path, dry_run = TRUE) {
     )
   }
   if (!file.exists(path) && !dir.exists(path)) {
-    stop("Artifact does not exist: ", path, call. = FALSE, domain = "R-bigbang")
+    stop(.bb_trf("Artifact does not exist: %s", path), call. = FALSE)
   }
 
   original_path <- path
-  path <- normalizePath(path, mustWork = TRUE)
+  path <- normalizePath(path, winslash = "/", mustWork = TRUE)
 
   if (dir.exists(path)) {
     db <- list.files(
@@ -72,8 +72,7 @@ scan_bigbang_artifact <- function(path, dry_run = TRUE) {
     result <- .scan_source_archive(path)
     type <- "archive"
   } else {
-    stop("Unsupported artifact type: ", original_path, call. = FALSE,
-         domain = "R-bigbang")
+    stop(.bb_trf("Unsupported artifact type: %s", original_path), call. = FALSE)
   }
 
   structure(
@@ -131,6 +130,7 @@ scan_bigbang_artifact <- function(path, dry_run = TRUE) {
     "Version",
     paste0(current_prefix, "/generator-version"),
     paste0(current_prefix, "/template-safety-schema"),
+    paste0(current_prefix, "/packages"),
     paste0(legacy_prefix, "/generator-version"),
     paste0(legacy_prefix, "/template-safety-schema")
   )
@@ -180,8 +180,9 @@ scan_bigbang_artifact <- function(path, dry_run = TRUE) {
 .scan_source_tree <- function(root) {
   description <- file.path(root, "DESCRIPTION")
   if (!file.exists(description)) {
-    stop("No DESCRIPTION found in source directory: ", root, call. = FALSE,
-         domain = "R-bigbang")
+    stop(.bb_trf(
+      "No DESCRIPTION found in source directory: %s", root
+    ), call. = FALSE)
   }
   r_dir <- file.path(root, "R")
   r_files <- if (dir.exists(r_dir)) {
@@ -227,21 +228,6 @@ scan_bigbang_artifact <- function(path, dry_run = TRUE) {
   result
 }
 
-.validate_archive_members <- function(members) {
-  members <- gsub("\\\\", "/", members)
-  unsafe <- startsWith(members, "/") |
-    grepl("^[A-Za-z]:", members) |
-    grepl("(^|/)\\.\\.(/|$)", members, perl = TRUE)
-  if (any(unsafe)) {
-    stop(
-      "Archive contains unsafe absolute or parent-traversal paths: ",
-      paste(utils::head(members[unsafe], 3L), collapse = ", "),
-      call. = FALSE, domain = "R-bigbang"
-    )
-  }
-  invisible(members)
-}
-
 .scan_source_archive <- function(archive) {
   is_zip <- grepl("\\.zip$", archive, ignore.case = TRUE)
   members <- if (is_zip) {
@@ -268,23 +254,8 @@ scan_bigbang_artifact <- function(path, dry_run = TRUE) {
     stop("Refusing to scan an archive containing symbolic links.", call. = FALSE,
          domain = "R-bigbang")
   }
-  descriptions <- list.files(
-    extract_dir, pattern = "^DESCRIPTION$", recursive = TRUE, full.names = TRUE
-  )
-  if (length(descriptions) == 0L) {
-    stop("No DESCRIPTION found in source archive.", call. = FALSE,
-         domain = "R-bigbang")
-  }
-  depths <- lengths(strsplit(
-    substring(descriptions, nchar(extract_dir) + 2L), .Platform$file.sep,
-    fixed = TRUE
-  ))
-  descriptions <- descriptions[depths == min(depths)]
-  if (length(descriptions) != 1L) {
-    stop("Source archive has multiple candidate package roots.", call. = FALSE,
-         domain = "R-bigbang")
-  }
-  .scan_source_tree(dirname(descriptions))
+  package_root <- .find_archive_root(extract_dir, archive)
+  .scan_source_tree(package_root)
 }
 
 .scan_installed_lazydb <- function(root) {

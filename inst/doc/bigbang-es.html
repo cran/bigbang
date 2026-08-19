@@ -27,46 +27,32 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
-  }
-});
-</script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
 
 <style type="text/css">
-  code {
-    white-space: pre;
-  }
-  .sourceCode {
-    overflow: visible;
-  }
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
@@ -78,55 +64,54 @@ pre > code.sourceCode { white-space: pre-wrap; }
 pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
-  { counter-reset: source-line 0; }
+{ counter-reset: source-line 0; }
 pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
+{ position: relative; left: -4em; counter-increment: source-line; }
 pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
 div.sourceCode
-  {   }
+{ }
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
 </style>
 <script>
 // apply pandoc div.sourceCode style to pre.sourceCode instead
@@ -358,49 +343,130 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div id="qué-hace-bigbang" class="section level2">
 <h2>Qué hace bigbang</h2>
-<p><code>bigbang</code> crea un metapaquete a partir de archivos locales <code>.tar.gz</code>, <code>.tar</code> o <code>.zip</code>. Está pensado para equipos que distribuyen paquetes internos sin depender de un repositorio en línea. La generación nunca instala componentes ni borra contenido del directorio de trabajo.</p>
-<p>La API pública usa nombres en inglés para ser consistente con el ecosistema de R:</p>
+<p><code>bigbang</code> crea un metapaquete a partir de archivos locales
+<code>.tar.gz</code>, <code>.tar</code> o <code>.zip</code>. Está
+pensado para equipos que distribuyen paquetes internos sin depender de
+un repositorio en línea. La generación nunca instala componentes ni
+borra contenido del directorio de trabajo.</p>
+<p>La API pública usa nombres en inglés para ser consistente con el
+ecosistema de R:</p>
 <ul>
-<li><code>create_metapackage()</code> crea la fuente del metapaquete.</li>
-<li><code>install_local_pkg()</code> instala un archivo local y sus dependencias.</li>
-<li><code>diagnose_dependencies()</code> busca dependencias implícitas.</li>
-<li><code>scan_bigbang_artifact()</code> examina artefactos históricos sin cargarlos.</li>
+<li><code>create_metapackage()</code> crea la fuente del
+metapaquete.</li>
+<li><code>install_local_pkg()</code> instala un archivo local y sus
+dependencias.</li>
+<li><code>diagnose_dependencies()</code> busca dependencias
+implícitas.</li>
+<li><code>scan_bigbang_artifact()</code> examina artefactos históricos
+sin cargarlos.</li>
 </ul>
 </div>
 <div id="crear-un-metapaquete" class="section level2">
 <h2>Crear un metapaquete</h2>
-<p>Los nombres de <code>packages</code> incluyen la versión pero no la extensión:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>resultado &lt;-<span class="st"> </span><span class="kw">create_metapackage</span>(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="dt">name =</span> <span class="st">&quot;equipoverse&quot;</span>,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="dt">packages =</span> <span class="kw">c</span>(<span class="st">&quot;datos_1.2.0&quot;</span>, <span class="st">&quot;reportes_0.9.1&quot;</span>),</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>  <span class="dt">pkg_dir =</span> <span class="st">&quot;ruta/a/instalables&quot;</span>,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>  <span class="dt">ext =</span> <span class="st">&quot;.tar.gz&quot;</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>  <span class="dt">dest_dir =</span> <span class="kw">tempdir</span>(),</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>  <span class="dt">document =</span> <span class="ot">TRUE</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>resultado</span></code></pre></div>
-<p>El destino debe ser nuevo o estar vacío. Esta restricción evita conservar hooks o scripts generados por versiones antiguas vulnerables. Nunca regenere in-place una fuente cuya procedencia no haya sido verificada.</p>
+<p>Los nombres de <code>packages</code> incluyen la versión pero no la
+extensión:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>resultado <span class="ot">&lt;-</span> <span class="fu">create_metapackage</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;equipoverse&quot;</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="at">packages =</span> <span class="fu">c</span>(<span class="st">&quot;datos_1.2.0&quot;</span>, <span class="st">&quot;reportes_0.9.1&quot;</span>),</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">pkg_dir =</span> <span class="st">&quot;ruta/a/instalables&quot;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">ext =</span> <span class="st">&quot;.tar.gz&quot;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">dest_dir =</span> <span class="fu">tempdir</span>(),</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">document =</span> <span class="cn">TRUE</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>resultado</span></code></pre></div>
+<p>El destino debe ser nuevo o estar vacío. Esta restricción evita
+conservar hooks o scripts generados por versiones antiguas vulnerables.
+Nunca regenere in-place una fuente cuya procedencia no haya sido
+verificada.</p>
 </div>
 <div id="instalar-y-adjuntar-componentes" class="section level2">
 <h2>Instalar y adjuntar componentes</h2>
-<p>La instalación es explícita. <code>library(equipoverse)</code> solo adjunta los componentes ya instalados e informa cuáles faltan. Para instalar desde los archivos locales:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">library</span>(equipoverse)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="kw">equipoverse_install</span>(<span class="dt">cran_deps =</span> <span class="st">&quot;skip&quot;</span>)</span></code></pre></div>
-<p>La política predeterminada <code>cran_deps = &quot;skip&quot;</code> no accede a la red. Las alternativas son <code>&quot;error&quot;</code> (falla sin red) e <code>&quot;install&quot;</code> (intenta instalar desde <code>repos</code>). Los paquetes locales se instalan una sola vez en orden topológico; los ciclos producen una condición <code>bigbang_error_cycle</code>.</p>
+<p>La instalación es explícita. <code>library(equipoverse)</code> solo
+adjunta los componentes ya instalados e informa cuáles faltan. Para
+instalar desde los archivos locales:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(equipoverse)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">equipoverse_install</span>()</span></code></pre></div>
+<p>El metapaquete generado lleva adentro los archivos de sus
+componentes, así que la llamada no necesita argumentos. Eso también
+significa que para entregarlo a otra persona alcanza con el
+<code>equipoverse_0.1.0.tar.gz</code> construido: lo instala y llama a
+<code>equipoverse_install()</code>, sin la carpeta de archivos al lado y
+sin acordar ninguna ruta de antemano. El valor predeterminado de
+<code>pkg_dir</code> es
+<code>system.file(&quot;archives&quot;, package = &quot;equipoverse&quot;)</code>, que se
+resuelve al ejecutar el instalador y por eso apunta a la biblioteca
+donde quedó instalado.</p>
+<p>Genere con <code>include_archives = FALSE</code> cuando los archivos
+deban permanecer en una ubicación a la que todos los destinatarios ya
+tengan acceso; en ese caso <code>equipoverse_install()</code> va a pedir
+un <code>pkg_dir</code> explícito.</p>
+<p>La política predeterminada <code>cran_deps = &quot;skip&quot;</code> no accede
+a la red. Las alternativas son <code>&quot;error&quot;</code> (falla sin red) e
+<code>&quot;install&quot;</code> (intenta instalar desde <code>repos</code>). Los
+paquetes locales se instalan una sola vez en orden topológico; los
+ciclos producen una condición <code>bigbang_error_cycle</code>.</p>
+<p><code>upgrade = &quot;newer&quot;</code> instala solo archivos más nuevos;
+<code>&quot;always&quot;</code> reinstala y <code>&quot;never&quot;</code> conserva
+cualquier versión instalada. <code>force = TRUE</code> equivale a
+<code>&quot;always&quot;</code>. Los metapaquetes generados ofrecen
+<code>&lt;meta&gt;_conflicts()</code> y respetan
+<code>options(&lt;meta&gt;.quiet = TRUE)</code>. Si <code>cli</code> no
+está disponible, el mensaje de arranque vuelve al banner ASCII sin
+fallar.</p>
 </div>
 <div id="archivos-zip" class="section level2">
 <h2>Archivos ZIP</h2>
-<p>Un ZIP que contiene <code>Meta/package.rds</code> se considera un binario de Windows y solo se instala en Windows con <code>type = &quot;win.binary&quot;</code>. Los demás ZIP con DESCRIPTION se extraen en un directorio temporal propio y se instalan como fuente.</p>
+<p>Un ZIP que contiene <code>Meta/package.rds</code> se considera un
+binario de Windows y solo se instala en Windows con
+<code>type = &quot;win.binary&quot;</code>. Los demás ZIP con DESCRIPTION se
+extraen en un directorio temporal propio y se instalan como fuente.</p>
 </div>
 <div id="revisar-artefactos-anteriores" class="section level2">
 <h2>Revisar artefactos anteriores</h2>
-<p>El escáner nunca carga el paquete y funciona en fuentes, tarballs, ZIP e instalaciones:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">scan_bigbang_artifact</span>(<span class="st">&quot;ruta/al/artefacto&quot;</span>, <span class="dt">dry_run =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
-<p>Si detecta firmas V1/V2/V3/V7, no ejecute <code>library()</code>, <code>devtools::document()</code> ni hooks del artefacto. Genere una versión nueva en una ruta vacía con la versión actual de <code>bigbang</code>, vuelva a escanearla y recién entonces constrúyala e instálela.</p>
+<p>El escáner nunca carga el paquete y funciona en fuentes, tarballs,
+ZIP e instalaciones:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">scan_bigbang_artifact</span>(<span class="st">&quot;ruta/al/artefacto&quot;</span>, <span class="at">dry_run =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Si detecta firmas V1/V2/V3/V7, no ejecute <code>library()</code>,
+<code>devtools::document()</code> ni hooks del artefacto. Genere una
+versión nueva en una ruta vacía con la versión actual de
+<code>bigbang</code>, vuelva a escanearla y recién entonces constrúyala
+e instálela.</p>
+</div>
+<div id="más-allá-del-caso-simple" class="section level2">
+<h2>Más allá del caso simple</h2>
+<p>Los ejemplos usan la entrada más simple: stems resueltos en un
+directorio. No es un requisito. Cualquier elemento de
+<code>packages</code> que sea un archivo existente se usa como ruta, así
+que los componentes pueden venir de varios directorios en una misma
+llamada, mezclar <code>.tar.gz</code>, <code>.tar</code> y
+<code>.zip</code>, y no llevar la versión en el nombre —la identidad y
+la versión salen del <code>DESCRIPTION</code> de cada archivo—. Un
+componente también puede ser un directorio fuente, que se empaqueta con
+el paquete opcional <code>pkgbuild</code>, o la lista entera puede vivir
+en un manifiesto bajo control de versiones.</p>
+<p>Dos opciones que conviene conocer antes de generar algo en serio:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>plan <span class="ot">&lt;-</span> <span class="fu">create_metapackage</span>(..., <span class="at">dry_run =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>plan<span class="sc">$</span>order      <span class="co"># el orden de instalación que se usaría</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>plan<span class="sc">$</span>findings   <span class="co"># todos los hallazgos de validación, sin escribir nada</span></span></code></pre></div>
+<p><code>dry_run = TRUE</code> no crea el destino. Y
+<code>update = TRUE</code> regenera un proyecto existente en el mismo
+lugar, reescribiendo solo los archivos que bigbang escribió —se niega si
+alguno fue modificado a mano, y nunca toca lo que no escribió—.</p>
+<p>Vea <code>?create_metapackage</code> para el conjunto completo,
+incluido <code>on_component_error</code> para generar a partir de un
+conjunto parcialmente roto, <code>tolerate</code> para relajar de a una
+las verificaciones de prolijidad, e <code>install_upgrade</code> para
+fijar la política de actualización del instalador emitido.</p>
 </div>
 <div id="idioma" class="section level2">
 <h2>Idioma</h2>
-<p>Los mensajes de ejecución tienen inglés como fuente y traducción completa al español mediante gettext. En R 4.2 o posterior puede usar <code>Sys.setLanguage(&quot;es&quot;)</code>; en versiones anteriores, defina <code>LANGUAGE=es</code> antes de iniciar R. La ayuda Rd se publica en inglés, como requiere CRAN. Cuando <code>rhelpi18n</code> madure y llegue a CRAN se evaluará publicar un módulo separado <code>bigbang.es</code> para traducir también la ayuda interactiva.</p>
+<p>Los mensajes de ejecución tienen inglés como fuente y traducción
+completa al español mediante gettext. En R 4.2 o posterior puede usar
+<code>Sys.setLanguage(&quot;es&quot;)</code>; en versiones anteriores, defina
+<code>LANGUAGE=es</code> antes de iniciar R. La ayuda Rd se publica en
+inglés, como requiere CRAN. Cuando <code>rhelpi18n</code> madure y
+llegue a CRAN se evaluará publicar un módulo separado
+<code>bigbang.es</code> para traducir también la ayuda interactiva.</p>
 </div>
 
 

@@ -6,20 +6,30 @@
 \usage{
 install_local_pkg(
   package,
-  pkg_dir,
+  pkg_dir = NULL,
   ext = ".tar.gz",
   repos = getOption("repos"),
   cran_deps = c("skip", "error", "install"),
-  verbose = getOption("bigbang.verbose", interactive())
+  verbose = getOption("bigbang.verbose", interactive()),
+  force = FALSE,
+  upgrade = c("newer", "always", "never"),
+  lib = .libPaths()[[1L]]
 )
 }
 \arguments{
-\item{package}{Character. Package file name without extension
-(for example, \code{"uspr_0.8.5"}).}
+\item{package}{Character. An existing archive path, or a package stem such
+as \code{"uspr_0.8.5"} to resolve in \code{pkg_dir}. An existing file is always
+treated as a path; only a non-existing element is resolved as a stem. A
+bare package name such as \code{"uspr"} resolves when exactly one archive in
+those directories declares that \code{Package} identity; multiple matches are
+an ambiguity error. Supported archives that cannot be read during this
+identity search are excluded with a warning that names the archive.}
 
-\item{pkg_dir}{Character. Directory containing local archives.}
+\item{pkg_dir}{Character. Optional directory or directories containing local
+archives. It is not needed when \code{package} is an existing path.}
 
-\item{ext}{Character. Archive extension.}
+\item{ext}{Character. Fallback archive extension for stems; existing paths
+keep their own extension.}
 
 \item{repos}{Character. Repositories used only when \code{cran_deps = "install"}.}
 
@@ -29,9 +39,24 @@ accessing it, and \code{"install"} attempts installation from \code{repos}.}
 
 \item{verbose}{Logical. Whether to emit progress and summary messages. The
 default follows \code{getOption("bigbang.verbose", interactive())}.}
+
+\item{force}{Logical. Reinstall every local archive. This is a convenience
+alias for \code{upgrade = "always"}.}
+
+\item{upgrade}{Character. Installed-version policy: \code{"newer"} installs only
+when the archive is newer, \code{"always"} reinstalls, and \code{"never"} keeps any
+installed version. Explicitly combining \code{force = TRUE} with a value other
+than \code{"always"} is an error.}
+
+\item{lib}{Character. Library in which the local component must be installed
+and verified when supplied explicitly. When omitted, the legacy lookup
+considers all of \code{.libPaths()} and installs into its first entry. Non-local
+dependencies may be available either in \code{lib} or anywhere on \code{.libPaths()}.}
 }
 \value{
-Invisibly, a list describing installed, failed, and skipped packages.
+Invisibly, a list describing installed, unchanged, failed, and
+skipped packages. Components that an upgrade policy left in place are
+reported in \code{unchanged}, not in \code{installed}.
 }
 \description{
 Installs a package from a local archive. Dependencies available as local
@@ -42,9 +67,21 @@ installed as source packages.
 }
 \section{Installation}{
 
-This function installs packages into the user's active R library. Installation
+This function installs packages into \code{lib}, which defaults to the user's
+active R library. When \code{lib} is supplied explicitly, a component found only
+in another library is still installed into \code{lib}; non-local dependencies are
+resolved from \code{lib} plus \code{.libPaths()}. When \code{lib} is omitted, an installed
+component found anywhere on \code{.libPaths()} retains the pre-0.3.0 behavior.
+Installation
 occurs only when the user calls the function; loading \code{bigbang} never installs
 packages. With the default \code{cran_deps = "skip"}, it does not access the network.
+An installed package can be kept without reading its archive when
+\code{upgrade = "never"}. Under the default policy, bigbang reads only the archive
+\code{DESCRIPTION} first; if that metadata cannot be verified for an already
+installed package, the installed package is kept and the reason is reported.
+With \code{upgrade = "never"}, the shortcut takes the component identity from the
+archive filename because the archive is not read. Use \code{upgrade = "newer"} when
+the declared \code{Package} field must be checked against the installed package.
 }
 
 \seealso{

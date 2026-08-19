@@ -10,13 +10,6 @@ test_that("generation requires an explicit destination without writing to cwd", 
       ),
       "'dest_dir' must be supplied"
     )
-    expect_error(
-      crear_meta_paquete_local(
-        "missingdest", "toycomponent_0.1.0", tempdir(),
-        generar_documentacion = FALSE, mostrar_progreso = FALSE
-      ),
-      "'dest_dir' must be supplied"
-    )
     expect_length(list.files(sandbox, all.files = TRUE, no.. = TRUE), 0L)
   })
 })
@@ -58,6 +51,10 @@ test_that("generation returns a classified result and non-empty destinations are
   expect_s3_class(result, "bigbang_result")
   expect_identical(result$name, "resultverse")
   expect_setequal(result$packages, c("aaa", "bbb"))
+  expect_identical(
+    names(result$tolerated), c("relaxation", "component", "reason")
+  )
+  expect_identical(nrow(result$tolerated), 0L)
   expect_true(dir.exists(result$path))
 
   emitted <- new.env(parent = baseenv())
@@ -136,6 +133,7 @@ test_that("generation and installation results print all summary branches", {
   installation <- structure(
     list(
       installed = list(aaa = "Installed successfully"),
+      unchanged = list(ddd = "Kept installed version 2.0, newer than archive version 1.0"),
       failed = list(bbb = "Installation failed"),
       skipped = list(ccc = "Offline policy")
     ),
@@ -146,6 +144,7 @@ test_that("generation and installation results print all summary branches", {
   )
   expect_identical(installation_returned, installation)
   expect_match(paste(installation_output, collapse = "\n"), "Installed: 1")
+  expect_match(paste(installation_output, collapse = "\n"), "Unchanged: 1")
   expect_match(paste(installation_output, collapse = "\n"), "Failed: 1")
   expect_match(paste(installation_output, collapse = "\n"), "Skipped: 1")
 })

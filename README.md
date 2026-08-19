@@ -4,23 +4,53 @@
 
 [![R-CMD-check](https://github.com/sebollin/bigbang/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sebollin/bigbang/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/bigbang)](https://CRAN.R-project.org/package=bigbang)
+[![r-universe](https://sebollin.r-universe.dev/bigbang/badges/version)](https://sebollin.r-universe.dev/bigbang)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL%20(%3E%3D%203)-142839.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-8AB46A.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-0D9786.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![docs: español](https://img.shields.io/badge/docs-espa%C3%B1ol-0D9786.svg)](https://github.com/sebollin/bigbang/blob/main/README.es.md)
 
 **bigbang** builds tidyverse-style metapackages from local package archives.
 Every metapackage ends in *-verse*—`tidyverse`, `teamverse`, yours. This package
 creates them: one function call, and a new *-verse* exists.
 
+Its reason to exist is **distributing a set of packages as a single unit**.
+
+Say you maintain four packages of your own that are used together and depend on
+each other. Someone joins the team, or another office asks for them. They are
+not on CRAN, so the way to hand them over is a folder of `.tar.gz` files.
+
+At best you add instructions: install this one first, then that one, this
+version goes with that one. But instructions are manual work for whoever
+receives them, and one more document to keep current every time a version
+changes or a package joins the set.
+
+bigbang puts that knowledge inside the package instead. The order comes from the
+real dependency graph and the versions are recorded in the generated
+metapackage, so there is nothing to follow by hand and nothing that can drift
+out of step with what the folder actually contains. The set you curated is the
+set they install, in a single line.
+
 ## ✨ At a glance
 
 - 📦 **One call, one -verse** — `create_metapackage()` scaffolds a complete,
-  documented, CRAN-checkable metapackage from a directory of `.tar.gz`/`.zip`
-  archives.
+  documented, CRAN-checkable metapackage from your own package archives.
+- 🗂️ **Your packages where you keep them** — components can come from several
+  directories, mix `.tar.gz`, `.tar` and `.zip`, carry no version in the
+  filename, be listed in a manifest file, or be source directories that bigbang
+  builds for you. Identity and version are read from each archive's
+  `DESCRIPTION`, not guessed from its name.
+- 🎯 **A curated set, distributed as one** — the metapackage records the exact
+  archive versions it was built from, so the combination you tested is the
+  combination that gets installed.
+- 📮 **One artifact to hand over** — the component archives travel inside the
+  generated metapackage, so `<meta>_install()` works with no arguments and no
+  path has to be agreed on between machines.
 - 🧭 **Real dependency resolution** — builds the local dependency graph,
-  orders installation topologically, and refuses cycles up front.
-- 🔌 **Offline first** — designed for teams behind institutional firewalls;
-  `cran_deps = "skip"` never touches the network.
+  orders installation topologically, and refuses cycles up front. Nobody
+  downstream has to work out what to install first.
+- 🔌 **No repository required** — every component is read from local files, so
+  installation needs no network at all; `cran_deps = "skip"` is the default. This is what makes bigbang work behind an institutional firewall,
+  but it is just as useful for shipping a versioned bundle anywhere.
 - 🌐 **Bilingual at runtime** — English and Spanish messages through R's native
   gettext support.
 - 🛡️ **Safe by design** — startup hooks never install packages or remove
@@ -35,13 +65,21 @@ The generated package has two separate jobs:
 
 ## 🚀 Installation
 
-Once on CRAN, the stable version will install with:
+The stable version is on CRAN:
 
 ```r
 install.packages("bigbang")
 ```
 
-The development version is on GitHub:
+The development version is served as a binary from r-universe, so it needs no
+compilation:
+
+```r
+install.packages("bigbang", repos = c("https://sebollin.r-universe.dev",
+                                      "https://cloud.r-project.org"))
+```
+
+Or from the sources on GitHub:
 
 ```r
 # install.packages("pak")
@@ -88,16 +126,171 @@ installation remains explicit:
 
 ```r
 library(teamverse)                 # attaches what is already installed
-teamverse_install(cran_deps = "skip")
+teamverse_install()                # installs them, in dependency order
 ```
+
+Attached component exports are available directly (for example, `report()`)
+or through their own namespace (`reports::report()`). They are not copied into
+the metapackage namespace, so `teamverse::report()` is not supported.
+
+To expose explicit component exports through read-only runtime bindings, use
+`reexport = TRUE` when generating. Components remain outside `Imports` and
+`Depends`, so the metapackage can be installed and loaded offline before they
+exist. Before installation, reading a binding returns a placeholder function;
+its clear missing-component error appears only when that function is called.
+For non-function exports, access returns the placeholder instead of the object
+until installation. The binding then resolves the real function or object
+without reloading the metapackage. Only explicit
+`export()` directives become bindings, including non-syntactic names, which are
+quoted safely in NAMESPACE. S4 classes and methods remain available by loading
+the component. An object restored with `readRDS()` does not load a
+component by itself, so base R cannot dispatch that component's S3 method until
+the component has been loaded.
+
+`teamverse` carries its components, so the call takes no arguments and that is
+all anyone who receives it has to do. Hand over the built
+`teamverse_0.1.0.tar.gz` and nothing else: no folder of archives alongside it,
+and no path to agree on beforehand. If the archives should stay in a shared
+location instead, generate with `include_archives = FALSE`; then
+`teamverse_install()` requires an explicit `pkg_dir`.
 
 `cran_deps = "skip"` is the default and never accesses the network. Use
 `"error"` to fail immediately when a non-local dependency is missing, or
 `"install"` with an explicitly configured `repos` value to allow repository
 installation.
 
+Generated installers also accept `upgrade = "newer"` (the default), `"always"`,
+or `"never"`; `force = TRUE` is the concise form of `upgrade = "always"`.
+Generated metapackages use an optional `cli` two-column attachment message and
+fall back to their ASCII banner when `cli` is unavailable. Set
+`options(teamverse.quiet = TRUE)` to silence startup messages, or call
+`teamverse_conflicts()` to inspect masking conflicts.
+
+For an ordered pipeline guide, supply every component once in a named workflow:
+
+```r
+workflow = c("Import" = "datahelpers", "Report" = "reports")
+```
+
+## Validation and explicit tolerances
+
+During generation, bigbang validates everything that protects the recipient of a
+generated metapackage. Unsafe or malformed archives, invalid component metadata,
+duplicate components, unsatisfied local version constraints, and dependency
+cycles are always hard errors and cannot be disabled. Installation is more
+tolerant: an already installed component can be kept when an archive it will
+not use cannot be read, and the reason is reported.
+
+Checks about project tidiness can be relaxed individually and explicitly:
+
+```r
+create_metapackage(
+  # ...,
+  tolerate = c("filename_mismatch", "unincluded_local_dep")
+)
+```
+
+`"filename_mismatch"` silences warnings when an archive filename differs from
+its DESCRIPTION identity. `"unincluded_local_dep"` changes the error for a
+local dependency available in the supplied sources but omitted from `packages`
+into a warning. The generated metapackage will not ship that dependency, so the
+recipient must provide it through `pkg_dir` or a repository with
+`cran_deps = "install"`. Applied relaxations are recorded in
+`result$tolerated`; unknown names are errors. There is deliberately no switch
+that disables all validation.
+
+bigbang does **not** run `R CMD check` on component packages. A component with
+check warnings or notes can be included; validation is limited to whether the
+distributed metapackage can identify and safely install its components.
+
 See `vignette("getting-started", package = "bigbang")` for a reproducible
 toy project created entirely under `tempdir()`.
+
+## 🎛️ Where components come from
+
+Any element of `packages` that is an existing file is used as a path; anything
+else is resolved as a stem in `pkg_dir`, which accepts more than one directory.
+So all of these work, including mixed together in one call:
+
+```r
+create_metapackage(
+  "teamverse",
+  packages = c(
+    "/srv/archives/first_1.2.0.tar.gz",  # a path, any directory
+    "~/builds/second.zip",               # another directory, another format
+    "third_0.4.0",                       # a stem resolved in pkg_dir
+    "~/src/fourth"                       # a source directory, built for you
+  ),
+  pkg_dir = c("/srv/archives", "~/builds"),
+  dest_dir = "~/projects"
+)
+```
+
+A filename without a version is fine: `Package` and `Version` come from the
+archive's `DESCRIPTION`. If the filename disagrees, bigbang warns and trusts the
+`DESCRIPTION`.
+
+A bare package name such as `"geomides"` also works when exactly one archive in
+`pkg_dir` declares `Package: geomides`. Matching uses the declared package
+identity, so `"geo"` never selects `geomides`; if several versions or sources
+match, bigbang lists the candidates and asks for an explicit stem or path.
+Unreadable archives encountered during that search are excluded with a warning
+that names each affected file.
+
+Source directories are built with the optional `pkgbuild` package, in a
+temporary directory, and require `include_archives = TRUE`, because the archive
+built for them does not outlive the call.
+
+`packages` can also be the path to a **manifest**: one component per line, `#`
+for comments. Relative paths in it resolve against the manifest's own directory;
+absolute paths and `~` paths are used as written; and bare filenames are also
+looked up in `pkg_dir`, so the list can live under version control while the
+archives do not.
+
+## 🎚️ Generation options
+
+```r
+plan <- create_metapackage(..., dry_run = TRUE)  # resolve, validate, write nothing
+plan$order                                       # installation order
+plan$files                                       # what would be written
+plan$findings                                    # every validation finding
+```
+
+`dry_run = TRUE` does not create `dest_dir` and does not touch the destination at
+all, so it is a safe way to see what a call would do before it does it.
+
+- `on_component_error = "skip"` generates from the components that are valid
+  instead of aborting, and reports the ones it left out. The exclusion is
+  transitive: a component that depends on an excluded one is excluded too, and
+  the chain is reported. When an invalid archive still has a readable
+  `DESCRIPTION`, its declared package name drives this propagation; otherwise
+  bigbang falls back to the filename and reports that limitation. Excluding
+  everything is an error. During an update, a failed input never authorizes
+  deletion of an archive already shipped by the project. If the old component
+  cannot be identified unambiguously, archive reconciliation waits for a clean
+  update.
+- `update = TRUE` regenerates in place. Generation records a manifest of the
+  files it wrote together with their content hashes; `update` rewrites only
+  those, and refuses to run if the manifest is missing or if a generated file was
+  modified or removed by hand. Files bigbang did not write are never touched.
+  Before changing an existing project, bigbang backs up every generated file
+  and its manifest. A failed update restores that state so the same update can
+  be retried. Both dry runs and real results list removed paths in
+  `removed_files`. Removing a component removes its shipped archive, which may
+  be the last available copy. A real result also lists partial documentation
+  files created and cleaned up after a failed roxygen run; a dry run cannot
+  predict those failure-dependent cleanups.
+  Updates also refuse to write through a symbolic project root or symbolic
+  links inside the generated project, including links in parent directories of
+  generated files.
+- `install_upgrade` fixes the default upgrade policy of the installer that gets
+  emitted, so you decide when generating whether recipients stay pinned to the
+  versions you ship (`"always"`) or keep anything newer they already have
+  (`"newer"`, the default).
+
+The generated installer also takes `only` to install a subset — local
+dependencies of the selection are added automatically — and `lib` to choose the
+library it installs into.
 
 ## 🧰 Main API
 
@@ -107,7 +300,6 @@ toy project created entirely under `tempdir()`.
 - `scan_bigbang_artifact()` scans old source trees, archives, or installed
   packages for historical deletion signatures without loading them.
 
-The former Spanish function names remain as deprecated transition aliases.
 
 ## 🗜️ ZIP files and portability
 
@@ -135,11 +327,22 @@ as [README.es.md](https://github.com/sebollin/bigbang/blob/main/README.es.md). R
 native mechanism for translated help; a separate `bigbang.es` module can be
 considered if `rhelpi18n` becomes production-ready and reaches CRAN.
 
+## 🔭 Related projects
+
+- [pegeler/metapackage](https://github.com/pegeler/metapackage), by Paul
+  Egeler, is a declarative personal metapackage built around packages available
+  from online repositories. bigbang instead generates metapackages from local
+  package archives.
+- [metaverse](https://rmetaverse.github.io/metaverse/) is a community
+  metapackage for evidence synthesis, modeled on tidyverse. The attachment
+  message and `<meta>_packages()` design in bigbang-generated metapackages draw
+  on tidyverse and on metaverse (Westgate and colleagues).
+
 ## 🧭 Choosing the right tool
 
 | Need | Best fit |
 |---|---|
-| One metapackage over a fixed set of local archives, with explicit offline installation | `bigbang` |
+| Distribute one curated, version-pinned set of local archives as a single installable unit | `bigbang` |
 | A conventional local repository with indexes, multiple packages, and repository semantics | `miniCRAN` or `drat` |
 | A small metapackage around packages already available from repositories | `pkgverse` |
 
@@ -170,7 +373,7 @@ place. The full remediation procedure is documented in the Spanish guide and in
 ## 🙏 Acknowledgments
 
 bigbang started from a suggestion by
-[Richard Detomasi](https://github.com/RichDeto), who proposed building a
+[Richard Detomasi](https://github.com/Richard-Detomasi), who proposed building a
 metapackage tool and pointed to
 [pegeler/metapackage](https://github.com/pegeler/metapackage) as an antecedent.
 The design and implementation—including the graph-based dependency
@@ -195,10 +398,10 @@ citation("bigbang")
 ```bibtex
 @Manual{bigbang2026,
   title  = {bigbang: Build 'Tidyverse'-Style Meta-Packages from Local Package Files},
-  author = {Sebastian Lucas},
-  note   = {R package version 0.1.0},
+  author = {Sebastián Lucas},
+  note   = {R package version 0.3.0},
   year   = {2026},
-  url    = {https://github.com/sebollin/bigbang},
+  url    = {https://sebollin.github.io/bigbang/},
 }
 ```
 

@@ -49,7 +49,7 @@ test_that("all generated text files are valid UTF-8 in the C locale", {
       dest_dir = destination,
       document = FALSE,
       verbose = FALSE,
-      description = "Metapackage with UTF-8 text: café, jalapeño, naïve."
+      description = "Metapackage with UTF-8 text: caf\u00e9, jalape\u00f1o, na\u00efve."
     )
   ))
   project <- file.path(destination, "portablemeta")
@@ -59,6 +59,13 @@ test_that("all generated text files are valid UTF-8 in the C locale", {
   text_files <- text_files[!dir.exists(text_files)]
   # Compiled gettext catalogs are binary, not emitted text files.
   text_files <- text_files[!grepl("\\.mo$", text_files)]
+  text_files <- text_files[!grepl("\\.bigbang-manifest\\.rds$", text_files)]
+  # Component archives are copied verbatim into the meta-package; they are
+  # binary payload rather than generated text. Only the archives themselves are
+  # exempt, so anything else appearing there is still validated.
+  text_files <- text_files[
+    !grepl("/inst/archives/.*\\.(tar\\.gz|tgz|zip|tar)$", text_files)
+  ]
   expect_gt(length(text_files), 5L)
   for (path in text_files) {
     bytes <- readBin(path, what = "raw", n = file.info(path)$size)
@@ -74,12 +81,36 @@ test_that("all generated text files are valid UTF-8 in the C locale", {
 
   attach_env <- new.env(parent = baseenv())
   sys.source(file.path(project, "R", "attach.R"), envir = attach_env)
+  sys.source(file.path(project, "R", "install_packages.R"), envir = attach_env)
   expect_named(
     formals(attach_env$portablemeta_install),
-    c("pkg_dir", "ext", "cran_deps", "repos", "verbose")
+    c("pkg_dir", "ext", "cran_deps", "repos", "verbose", "force", "upgrade",
+      "only", "lib")
   )
-  install_default <- formals(attach_env$portablemeta_install)$pkg_dir
-  expect_identical(eval(install_default), archives)
+  # The archives ship inside the meta-package, so both entry points default to
+  # the shipped directory. The default is a call, resolved when the function
+  # runs, and never a path belonging to the generating machine.
+  expected_default <- quote(system.file("archives", package = "portablemeta"))
+  expect_identical(
+    formals(attach_env$portablemeta_install)[["pkg_dir"]], expected_default
+  )
+  expect_identical(
+    formals(attach_env$portablemeta_deps)[["pkg_dir"]], expected_default
+  )
+  emitted_code <- paste(
+    readLines(file.path(project, "R", "attach.R"), warn = FALSE),
+    readLines(file.path(project, "R", "install_packages.R"), warn = FALSE),
+    collapse = "\n"
+  )
+  expect_path_absent(archives, emitted_code)
+})
+
+test_that("path assertions recognize extended Windows path prefixes", {
+  path <- tempfile("bigbang-extended-path-")
+  dir.create(path)
+  extended <- paste0("//?/", .canonical_test_path(path))
+  extended <- chartr("/", "\\", extended)
+  expect_true(contains_path(path, extended))
 })
 
 test_that("ZIP content distinguishes source archives from Windows binaries", {

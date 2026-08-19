@@ -7,9 +7,13 @@
 #' @param authors Character Authors@R expression.
 #' @param description Character title and description seed.
 #' @param license Character license specification.
+#' @param component_packages Character component package names.
+#' @param description_path Character output path.
 #' @param verbose Logical debug toggle.
+#' @param r_requirement Optional R version requirement propagated from
+#'   component DESCRIPTION files.
 #'
-#' @return Invisible `NULL`; writes DESCRIPTION in the current directory.
+#' @return Invisible `NULL`; writes DESCRIPTION to `description_path`.
 #' @noRd
 write_description_file <- function(
   name,
@@ -19,7 +23,10 @@ write_description_file <- function(
   authors = "person('First', 'Last', email = 'first.last@example.com', role = c('aut', 'cre'))",
   description = "Local Package Metapackage",
   license = "MIT + file LICENSE",
-  verbose = FALSE
+  component_packages = character(),
+  description_path = "DESCRIPTION",
+  verbose = FALSE,
+  r_requirement = list(op = ">=", version = "3.5.0")
 ) {
   # Use a minimal default when no implicit dependencies were supplied.
   if (is.null(implicit_deps)) {
@@ -50,7 +57,9 @@ write_description_file <- function(
 
 
   # Build Depends.
-  deps_section <- "    R (>= 3.5.0)"
+  deps_section <- paste0(
+    "    R (", r_requirement$op, " ", r_requirement$version, ")"
+  )
   if (length(deps_for_depends) > 0) {
     deps_section <- paste0(
       deps_section, ",\n    ",
@@ -90,15 +99,15 @@ Depends:
 Imports:
 {imports_section}
 Suggests:
-    crayon,
-    rstudioapi
+    cli
 Config/Needs/website: {paste(implicit_deps, collapse = ", ")}
-Config/bigbang/generator-version: {.generator_version}
+Config/bigbang/generator-version: {.bb_generator_version()}
 Config/bigbang/template-safety-schema: {.template_safety_schema}
+Config/bigbang/packages: {paste(component_packages, collapse = ", ")}
 '
   )
 
-  .write_utf8(desc_content, "DESCRIPTION")
+  .write_utf8(desc_content, description_path)
 
   if (verbose) {
     message(.bb_tr("DEBUG: DESCRIPTION file created"))
@@ -107,19 +116,55 @@ Config/bigbang/template-safety-schema: {.template_safety_schema}
 
 
 
+#' Names reserved by generated metapackage code.
+#'
+#' @param name Character metapackage name.
+#' @return Character vector of symbols that cannot be replaced by active
+#'   component bindings.
+#' @noRd
+.generated_metapackage_symbols <- function(name) {
+  public <- paste0(name, c("_attach", "_detach", "_packages", "_attach_all",
+                           "_install", "_load_all", "_deps", "_conflicts"))
+  c(public, paste0("print.", name, "_conflicts"),
+    ".pkgs", ".component_names", ".component_specs",
+    ".component_reexport_specs", ".reexport_state", ".reexport_library_paths",
+    ".set_reexport_library", ".reexport_component_value",
+    ".make_reexport_binding", ".install_reexport_bindings",
+    "attach_installed_packages", ".bigbang_abort",
+    "install_packages_in_order", "resolve_upgrade_policy",
+    "with_install_library_path", "install_source_component",
+    "resolve_component_spec", "resolve_component_archive", "read_archive_metadata",
+    "read_archive_dependencies", "version_satisfies",
+    "validate_local_constraints", "classify_package_archive",
+    "install_local_archive", "detect_cycles", "build_dependency_graph",
+    "topological_order",
+    "style_startup_text", "package_version", "startup_message",
+    "generate_ascii_banner", "format_cli_startup", "safe_unlink",
+    "is_path_inside", ".meta_tr", ".meta_trf", ".onLoad", ".onAttach", ".onUnload")
+}
+
+.namespace_export_directive <- function(symbol) {
+  quoted <- if (any(utf8ToInt(enc2utf8(symbol)) > 0x7fL)) {
+    .r_ascii_literal(symbol)
+  } else {
+    paste(deparse(as.name(symbol), backtick = TRUE), collapse = "")
+  }
+  paste0("export(", quoted, ")")
+}
+
 #' Write a generated metapackage NAMESPACE
 #'
 #' @param name Character metapackage name.
-#' @param cran_packages Character non-local dependencies.
 #' @param namespace_path Character output path.
 #' @param implicit_deps Character implicit dependencies.
 #' @param import_deps Character dependencies placed in Imports.
 #' @return Invisible `NULL`; writes NAMESPACE.
 #' @noRd
 
-write_namespace_file <- function(name, cran_packages, namespace_path,
+write_namespace_file <- function(name, namespace_path,
                                  implicit_deps = NULL, import_deps = NULL,
-                                 verbose = FALSE) {
+                                 verbose = FALSE,
+                                 reexport_symbols = character()) {
   # Export the complete generated API without requiring roxygen at generation time.
   export <- paste0(
     "export(", name, "_attach)\n",
@@ -128,8 +173,17 @@ write_namespace_file <- function(name, cran_packages, namespace_path,
     "export(", name, "_attach_all)\n",
     "export(", name, "_install)\n",
     "export(", name, "_load_all)\n",
-    "export(", name, "_deps)\n"
+    "export(", name, "_deps)\n",
+    "export(", name, "_conflicts)\n",
+    "S3method(print,", name, "_conflicts)\n"
   )
+  reexports <- if (length(reexport_symbols) > 0L) {
+    paste(vapply(
+      reexport_symbols, .namespace_export_directive, character(1L)
+    ), collapse = "\n")
+  } else {
+    character()
+  }
 
   # Import every implicit dependency for compatibility with existing metapackages.
   imports <- character(0)
@@ -142,6 +196,7 @@ write_namespace_file <- function(name, cran_packages, namespace_path,
     "# Generated by roxygen2: do not edit by hand",
     "",
     export,
+    reexports,
     paste(imports, collapse = "\n")
   )
 
@@ -153,230 +208,226 @@ write_namespace_file <- function(name, cran_packages, namespace_path,
   }
 }
 
-
-
-
-#' Generate component re-exports
-#'
-#' Examines installed component namespaces and writes roxygen re-export
-#' directives, resolving duplicate names deterministically.
-#'
-#' @param name Character metapackage name.
-#' @param packages Character component names without versions.
-#' @param dest_dir Character output directory.
-#' @param exclude_funs Character names to exclude.
-#' @param exclude_patterns Character exclusion regular expressions.
-#' @param verbose Logical debug toggle.
-#' @return A list describing re-exports, conflicts, and the generated file.
-#' @noRd
-write_reexports_file <- function(
-  name,
-  packages,
-  dest_dir,
-  exclude_funs = NULL,
-  exclude_patterns = c("^\\.", "^_"),
-  verbose = FALSE
-) {
-  log_debug <- function(msg) {
-    if (verbose) message(paste0("DEBUG: ", msg))
+.ensure_namespace_exports <- function(namespace_path, symbols = character()) {
+  symbols <- unique(symbols[nzchar(symbols)])
+  if (!file.exists(namespace_path) || length(symbols) == 0L) {
+    return(invisible(NULL))
   }
-
-  log_debug("Starting re-export file generation")
-
-  available_packages <- packages[sapply(packages, requireNamespace, quietly = TRUE)]
-
-  if (length(available_packages) == 0) {
-    warning(.bb_tr("No component packages are installed; re-exports were not generated."),
-            call. = FALSE)
-    return(NULL)
-  }
-
-  log_debug(paste("Available packages:", paste(available_packages, collapse = ", ")))
-
-  should_exclude <- function(fun_name) {
-    # Exclude exact names and configured patterns.
-    if (!is.null(exclude_funs) && fun_name %in% exclude_funs) {
-      return(TRUE)
-    }
-
-    if (!is.null(exclude_patterns)) {
-      for (pattern in exclude_patterns) {
-        if (grepl(pattern, fun_name)) {
-          return(TRUE)
-        }
-      }
-    }
-
-    FALSE
-  }
-
-  get_exported_functions <- function(pkg) {
-    log_debug(paste("Reading exports from", pkg))
-
-    ns <- asNamespace(pkg)
-    exports <- getNamespaceExports(ns)
-
-    exports <- exports[!sapply(exports, should_exclude)]
-
-    # Keep functions rather than data or classes.
-    is_function <- vapply(exports, function(x) {
-      tryCatch(
-        is.function(get(x, envir = ns)),
-        error = function(e) FALSE
-      )
-    }, logical(1))
-
-    # Detect likely S3 generics.
-    is_s3_generic <- vapply(exports[is_function], function(x) {
-      tryCatch({
-        fun <- get(x, envir = ns)
-        is.primitive(fun) || grepl("UseMethod", deparse(body(fun)))
-      }, error = function(e) FALSE)
-    }, logical(1))
-
-    result <- list(
-      functions = exports[is_function],
-      s3_generics = names(is_s3_generic)[is_s3_generic]
-    )
-
-    result
-  }
-
-  # Collect exports by package.
-  all_exports <- lapply(available_packages, get_exported_functions)
-  names(all_exports) <- available_packages
-
-  reexports <- lapply(all_exports, function(x) x$functions)
-
-  # Preserve S3 generics for explicit directives.
-  s3_generics <- lapply(all_exports, function(x) x$s3_generics)
-
-  # Drop components without exported functions.
-  reexports <- reexports[vapply(reexports, length, integer(1)) > 0]
-
-  if (length(reexports) == 0) {
-    warning(.bb_tr("No functions were found to re-export."), call. = FALSE)
-    return(NULL)
-  }
-
-  log_debug(paste("Packages with functions:", length(reexports)))
-
-  # Generate English roxygen source for the re-exports.
-  content <- c(
-    paste0("#\' Functions re-exported from components of ", name),
-    "#\'",
-    "#\' This file re-exports component functions for direct access through",
-    paste0("#\' the ", name, " metapackage, following the tidyverse convention."),
-    "#\' Re-exported functions retain their original behavior.",
-    "#\'",
-    "#\' @keywords internal",
-    ""
+  lines <- readLines(namespace_path, warn = FALSE, encoding = "UTF-8")
+  directives <- vapply(
+    symbols, .namespace_export_directive, character(1L)
   )
-
-  # Detect names exported by more than one component.
-  all_functions <- unlist(reexports)
-  function_counts <- table(all_functions)
-  duplicate_names <- names(function_counts)[function_counts > 1]
-
-  # Map each duplicate function to its exporting packages.
-  duplicates_map <- lapply(duplicate_names, function(fun) {
-    pkgs <- names(reexports)[sapply(reexports, function(x) fun %in% x)]
-    pkgs
-  })
-  names(duplicates_map) <- duplicate_names
-
-  # Document deterministic conflict resolution.
-  if (length(duplicate_names) > 0) {
-    content <- c(
-      content,
-      "# NOTE: Multiple components export the following function names:",
-      "",
-      "# Conflict resolution:",
-      "# The last component in package order wins each conflict:"
-    )
-
-    for (fun in duplicate_names) {
-      pkgs <- duplicates_map[[fun]]
-      winner <- pkgs[length(pkgs)]
-      content <- c(
-        content,
-        paste0("# - ", fun, ": ", paste(pkgs, collapse = " vs "), " -> ", winner, " (winner)")
-      )
-    }
-
-    content <- c(content, "")
-    log_debug(paste("Conflicts detected:", paste(duplicate_names, collapse = ", ")))
-  }
-
-  # Generate one section per component.
-  for (pkg in names(reexports)) {
-    content <- c(
-      content,
-      paste0("# Re-exports from ", pkg),
-      ""
-    )
-
-    pkg_functions <- reexports[[pkg]]
-
-    # Keep duplicate exports only for their winning package.
-    pkg_functions <- setdiff(
-      pkg_functions,
-      unlist(lapply(duplicate_names, function(fun) {
-        pkgs <- duplicates_map[[fun]]
-        winner <- pkgs[length(pkgs)]
-        if (fun %in% pkg_functions && pkg != winner) fun else NULL
-      }))
-    )
-
-    for (fun in pkg_functions) {
-      is_s3 <- fun %in% s3_generics[[pkg]]
-
-      if (is_s3) {
-        content <- c(
-          content,
-          paste0("#' @export ", fun),
-          paste0("#' @importFrom ", pkg, " ", fun),
-          paste0(fun, " <- ", pkg, "::", fun),
-          ""
-        )
-      } else {
-        content <- c(
-          content,
-          paste0("#' @importFrom ", pkg, " ", fun),
-          "#' @export",
-          fun,
-          ""
-        )
-      }
-    }
-  }
-
-
-  # Ensure the output directory exists.
-  if (!dir.exists(dest_dir)) {
-    dir.create(dest_dir, recursive = TRUE)
-  }
-
-  # Write the generated re-export file.
-  reexports_file <- file.path(dest_dir, "reexports.R")
-  .write_utf8(content, reexports_file)
-
-  if (verbose) {
-    message(.bb_trf(
-      "Re-export file created with %d functions from %d packages.",
-      sum(vapply(reexports, length, integer(1))), length(reexports)
-    ))
-  }
-
-  result <- list(
-    reexports = reexports,
-    conflicts = duplicates_map,
-    file = reexports_file
-  )
-
-  invisible(result)
+  missing <- setdiff(directives, trimws(lines))
+  if (length(missing) > 0L) .write_utf8(c(lines, missing), namespace_path)
+  invisible(NULL)
 }
 
+.write_reexport_documentation <- function(project_dir, symbols) {
+  symbols <- unique(symbols[nzchar(symbols)])
+  if (length(symbols) == 0L) return(invisible(NULL))
+  content <- c(
+    "\\name{reexports}",
+    "\\alias{reexports}",
+    paste0("\\alias{", symbols, "}"),
+    "\\title{Runtime component re-exports}",
+    paste0(
+      "\\description{Explicit exports from component packages are resolved ",
+      "through read-only active bindings when the component is installed.}"
+    ),
+    "\\details{The component package is loaded lazily when a binding is read.}",
+    "\\keyword{internal}"
+  )
+  .write_utf8(content, file.path(project_dir, "man", "reexports.Rd"))
+  invisible(NULL)
+}
+
+.deduplicate_namespace_imports <- function(namespace_path) {
+  if (!file.exists(namespace_path)) return(invisible(NULL))
+  lines <- readLines(namespace_path, warn = FALSE, encoding = "UTF-8")
+  seen <- character()
+  keep <- vapply(lines, function(line) {
+    if (!grepl("^importFrom\\(", line)) return(TRUE)
+    key <- gsub("[[:space:]]", "", line)
+    if (key %in% seen) return(FALSE)
+    seen <<- c(seen, key)
+    TRUE
+  }, logical(1L))
+  if (any(!keep)) .write_utf8(lines[keep], namespace_path)
+  invisible(NULL)
+}
+
+#' Write a generated metapackage README
+#'
+#' @param name Character metapackage name.
+#' @param project_dir Character project directory.
+#' @param include_archives Logical, whether the component archives ship inside
+#'   the meta-package. It decides whether the documented installation call needs
+#'   an archive directory at all.
+#' @return Invisible path to the generated README.
+#' @noRd
+write_metapackage_readme <- function(name, project_dir,
+                                     include_archives = FALSE,
+                                     reexport = FALSE) {
+  readme_path <- file.path(project_dir, "README.md")
+  content <- c(
+    paste0("# ", name),
+    "",
+    "This metapackage was generated by bigbang from local package archives.",
+    "Loading it attaches components that are already installed; it never installs",
+    "packages during startup.",
+    if (isTRUE(reexport)) {
+      c(
+        "Explicit exports are available through read-only runtime bindings in",
+        "this metapackage. Component packages are not installation dependencies,",
+        "so the package can be installed and loaded before its components exist.",
+        "Before installation, reading a binding returns a placeholder function;",
+        "its clear missing-component error appears only when that function is called.",
+        "For non-function exports, access returns the placeholder instead of the",
+        "object until installation. The same binding then works without reload.",
+        "Only explicit export()",
+        "directives become bindings; S4 classes and methods remain available by",
+        "loading their component package.",
+        "An object restored with readRDS() does not load a component by itself,",
+        "so base R cannot dispatch that component's S3 method until it is loaded."
+      )
+    } else {
+      c(
+        "Attached exports are available directly or through each component namespace;",
+        "they are not copied into this metapackage namespace."
+      )
+    },
+    "",
+    "## Install components",
+    "",
+    if (isTRUE(include_archives)) {
+      c(
+        "The component archives ship inside this package, so installing the",
+        "components needs nothing else and no path has to be known:",
+        "",
+        "```r",
+        paste0(name, "_install()"),
+        "```"
+      )
+    } else {
+      c(
+        "The component archives live outside this package, so the directory",
+        "or directories holding them are required:",
+        "",
+        "```r",
+        paste0(name, "_install(pkg_dir = c(\"/path/to/local/archives\"))"),
+        "```"
+      )
+    },
+    "",
+    "Components are installed in dependency order. No repository is contacted",
+    "unless a component depends on a package that only exists in one, which",
+    "requires `cran_deps = \"install\"`.",
+    "",
+    "## Startup messages",
+    "",
+    "Set the package-specific option to silence attachment messages without changing",
+    "which installed components are attached:",
+    "",
+    "```r",
+    paste0("options(", name, ".quiet = TRUE)"),
+    paste0("library(", name, ")"),
+    "```",
+    "",
+    "## Helpers",
+    "",
+    paste0("- `", name, "_packages()` lists components."),
+    paste0("- `", name, "_conflicts()` reports masking conflicts."),
+    paste0("- `", name, "_detach()` detaches components."),
+    "",
+    "The install helper also accepts an 'only' component subset and an explicit 'lib' installation library.",
+    "",
+    "## Adding a component",
+    "",
+    "To request that a package be included in this meta-package, contact the",
+    "maintainer named in DESCRIPTION."
+  )
+  .write_utf8(content, readme_path)
+  invisible(readme_path)
+}
+
+#' Write an ordered workflow vignette skeleton
+#'
+#' @param name Character metapackage name.
+#' @param workflow Named character vector mapping stages to packages.
+#' @param project_dir Character project directory.
+#' @return Invisible path to the generated vignette.
+#' @noRd
+write_workflow_vignette <- function(name, workflow, project_dir) {
+  vignette_path <- file.path(
+    project_dir, "vignettes", paste0("workflow-", name, ".Rmd")
+  )
+  sections <- unlist(Map(function(stage, package, index) {
+    c(
+      paste0("## ", stage),
+      "",
+      paste0("Pipeline component: `", package, "`."),
+      "",
+      paste0("```{r stage-", index, ", eval=FALSE}"),
+      paste0("# Add the ", stage, " step using ", package, "."),
+      "```",
+      ""
+    )
+  }, names(workflow), unname(workflow), seq_along(workflow)), use.names = FALSE)
+  content <- c(
+    "---",
+    paste0("title: \"Workflow for ", name, "\""),
+    "output: rmarkdown::html_vignette",
+    "vignette: >",
+    paste0("  %\\VignetteIndexEntry{Workflow for ", name, "}"),
+    "  %\\VignetteEngine{knitr::rmarkdown}",
+    "  %\\VignetteEncoding{UTF-8}",
+    "---",
+    "",
+    "This skeleton follows the configured component order. Replace each placeholder",
+    "with the project-specific analysis step.",
+    "",
+    sections,
+    "## Citations",
+    "",
+    "Use each component's preferred citation:",
+    "",
+    "```{r component-citations, eval=FALSE}",
+    paste0("citations <- lapply(", name, "_packages(), citation)"),
+    "citations",
+    "```"
+  )
+  .write_utf8(content, vignette_path)
+  invisible(vignette_path)
+}
+
+#' Write the generated component-consistency test
+#'
+#' @param name Character metapackage name.
+#' @param project_dir Character project directory.
+#' @return Invisible path to the generated test.
+#' @noRd
+write_consistency_test <- function(name, project_dir) {
+  test_dir <- file.path(project_dir, "tests")
+  dir.create(test_dir, recursive = TRUE, showWarnings = FALSE)
+  test_path <- file.path(test_dir, "component-consistency.R")
+  content <- c(
+    paste0("stopifnot(requireNamespace(\"", name, "\", quietly = TRUE))"),
+    paste0("description <- utils::packageDescription(\"", name, "\")"),
+    "declared <- strsplit(description[[\"Config/bigbang/packages\"]], \",\", fixed = TRUE)[[1L]]",
+    "declared <- trimws(declared[nzchar(declared)])",
+    paste0(
+      "component_packages <- get(\"", name, "_packages\", envir = ",
+      "asNamespace(\"", name, "\"))()"
+    ),
+    "stopifnot(setequal(component_packages, declared))",
+    "imports <- description[[\"Imports\"]]",
+    "imports <- if (is.null(imports)) character() else strsplit(imports, \",\", fixed = TRUE)[[1L]]",
+    "imports <- trimws(gsub(\"\\\\s*\\\\([^)]*\\\\)\", \"\", imports))",
+    "stopifnot(length(intersect(component_packages, imports)) == 0L)"
+  )
+  .write_utf8(content, test_path)
+  invisible(test_path)
+}
 #' Create a basic generated-metapackage vignette
 #'
 #' Writes an English R Markdown introduction and ensures DESCRIPTION declares
@@ -389,36 +440,24 @@ write_reexports_file <- function(
 #' @return Invisible `NULL`; called for side effects.
 #' @noRd
 
-write_basic_vignette <- function(name, packages, project_dir, verbose = FALSE) {
-  # Operate from the generated project root and restore the caller's cwd.
-  if (basename(getwd()) != basename(project_dir)) {
-    warning(.bb_trf(
-      "Current directory (%s) does not match project directory (%s).",
-      getwd(), project_dir
-    ), call. = FALSE)
-    if (dir.exists(project_dir)) {
-      old_dir <- getwd()
-      on.exit(setwd(old_dir), add = TRUE)
-      setwd(project_dir)
-      message(.bb_trf("Temporarily changed directory to: %s", project_dir))
-    }
-  }
-
-  desc_file <- "DESCRIPTION"
+write_basic_vignette <- function(name, packages, project_dir,
+                                 include_archives = FALSE, verbose = FALSE) {
+  project_dir <- normalizePath(project_dir, winslash = "/", mustWork = TRUE)
+  desc_file <- file.path(project_dir, "DESCRIPTION")
   if (!file.exists(desc_file)) {
-    warning(.bb_tr("The DESCRIPTION file does not exist in the current directory."),
+    warning(.bb_tr("The DESCRIPTION file does not exist in the project directory."),
             call. = FALSE)
     return(invisible(FALSE))
   }
 
   # Ensure the vignette directory exists.
-  vignette_dir <- "vignettes"
+  vignette_dir <- file.path(project_dir, "vignettes")
   if (!dir.exists(vignette_dir)) {
     dir.create(vignette_dir, recursive = TRUE, showWarnings = TRUE)
   }
 
   tryCatch({
-    base_packages <- unique(sub("_.*", "", packages))
+    base_packages <- unique(packages)
 
     # Build the generated English introduction.
     vignette_content <- paste0(
@@ -446,11 +485,19 @@ write_basic_vignette <- function(name, packages, project_dir, verbose = FALSE) {
       "```{r eval=FALSE}\n",
       "library(", name, ")\n",
       "```\n\n",
+      "Attached component exports are available directly or through their own",
+      "package namespace; they are not copied into this metapackage namespace.\n\n",
       "## Available functions\n\n",
-      "* `", name, "_install()`: installs components from local archives.\n",
+      if (isTRUE(include_archives)) {
+        paste0("* `", name, "_install()`: installs the components shipped inside this package.\n")
+      } else {
+        paste0("* `", name, "_install(pkg_dir = ...)`: installs components from local archives.\n")
+      },
       "* `", name, "_attach()`: attaches installed components.\n",
       "* `", name, "_detach()`: detaches all components.\n",
-      "* `", name, "_packages()`: lists included packages.\n"
+      "* `", name, "_packages()`: lists included packages.\n",
+      "* `", name, "_conflicts()`: reports masking conflicts.\n\n",
+      "Set `options(", name, ".quiet = TRUE)` to silence startup messages.\n"
     )
 
     vignette_file <- file.path(vignette_dir, paste0("introduction-", name, ".Rmd"))

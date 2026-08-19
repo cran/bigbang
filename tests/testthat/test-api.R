@@ -11,26 +11,50 @@ test_that("the public API uses English snake_case names", {
       "name", "packages", "pkg_dir", "ext", "version", "dest_dir",
       "reexport", "document", "verbose", "authors", "description",
       "license", "additional_deps", "ignore_deps", "import_deps",
-      "force_deps", "debug"
+      "force_deps", "debug", "workflow", "include_archives", "tolerate",
+      "dry_run", "on_component_error", "update", "install_upgrade"
     )
   )
   expect_named(
     formals(install_local_pkg),
-    c("package", "pkg_dir", "ext", "repos", "cran_deps", "verbose")
+    c(
+      "package", "pkg_dir", "ext", "repos", "cran_deps", "verbose",
+      "force", "upgrade", "lib"
+    )
   )
   expect_named(formals(diagnose_dependencies), c("packages", "pkg_dir", "ext"))
 })
 
-test_that("Spanish compatibility aliases issue standard deprecation warnings", {
-  withr::local_options(bigbang.deprecation_warnings = TRUE)
-  expect_warning(
-    diagnosticar_dependencias(character(), tempdir()),
-    "deprecated"
+test_that("generated provenance uses the installed package version", {
+  expect_identical(
+    .bb_generator_version(),
+    as.character(utils::packageVersion("bigbang"))
   )
-  expect_warning(
-    install_loc_pkg_w_dep("doesnotexist_0.0.0", tempdir()),
-    "deprecated"
+})
+
+test_that("the Spanish transition aliases are gone", {
+  removed <- c(
+    "crear_meta_paquete_local", "diagnosticar_dependencias",
+    "install_loc_pkg_w_dep"
   )
+  if ("bigbang" %in% loadedNamespaces()) {
+    expect_false(any(removed %in% getNamespaceExports("bigbang")))
+  }
+  # The source NAMESPACE is only reachable when the tests run from the source
+  # tree; under R CMD check the installed namespace above is the authority.
+  namespace_file <- file.path(testthat::test_path(), "..", "..", "NAMESPACE")
+  if (file.exists(namespace_file)) {
+    namespace <- readLines(namespace_file, warn = FALSE)
+    for (name in removed) {
+      expect_false(
+        any(grepl(paste0("export(", name, ")"), namespace, fixed = TRUE)),
+        info = name
+      )
+    }
+  }
+  expect_false(any(vapply(
+    removed, exists, logical(1), where = asNamespace("bigbang"), inherits = FALSE
+  )))
 })
 
 test_that("unrelated utility leftovers are internal", {
