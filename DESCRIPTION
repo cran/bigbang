@@ -1,7 +1,7 @@
 Package: bigbang
 Type: Package
 Title: Build 'Tidyverse'-Style Meta-Packages from Local Package Files
-Version: 0.4.0
+Version: 0.5.0
 Authors@R: c(
     person(given = "Sebastián",
            family = "Lucas",
@@ -40,16 +40,16 @@ Language: en
 VignetteBuilder: knitr
 Depends: R (>= 3.6.0)
 Imports: brio, glue, tools, utils, whisker
-Suggests: devtools, knitr, pkgbuild, rmarkdown, testthat (>= 3.0.0),
-        withr
+Suggests: devtools, knitr, pkgbuild, pkgload, rmarkdown, roxygen2,
+        testthat (>= 3.0.0), withr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-08-19 12:26:50 UTC; user
+Packaged: 2026-10-02 10:32:27 UTC; user
 Author: Sebastián Lucas [aut, cre] (ORCID:
     <https://orcid.org/0009-0009-9068-0276>),
   Richard Detomasi [ctb] (ORCID: <https://orcid.org/0000-0002-6725-0261>,
     Suggested the initial idea of a metapackage builder)
 Maintainer: Sebastián Lucas <sebalucas@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-08-19 18:00:02 UTC
+Date/Publication: 2026-10-02 10:50:12 UTC
