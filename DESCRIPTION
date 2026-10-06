@@ -1,7 +1,7 @@
 Package: bigbang
 Type: Package
 Title: Build 'Tidyverse'-Style Meta-Packages from Local Package Files
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: c(
     person(given = "Sebastián",
            family = "Lucas",
@@ -45,11 +45,11 @@ Suggests: devtools, knitr, pkgbuild, pkgload, rmarkdown, roxygen2,
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-10-02 10:32:27 UTC; user
+Packaged: 2026-10-06 03:40:22 UTC; user
 Author: Sebastián Lucas [aut, cre] (ORCID:
     <https://orcid.org/0009-0009-9068-0276>),
   Richard Detomasi [ctb] (ORCID: <https://orcid.org/0000-0002-6725-0261>,
     Suggested the initial idea of a metapackage builder)
 Maintainer: Sebastián Lucas <sebalucas@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-10-02 10:50:12 UTC
+Date/Publication: 2026-10-06 07:30:15 UTC
