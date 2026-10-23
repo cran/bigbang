@@ -195,7 +195,7 @@ test_that("an omitted update input cannot delete its shipped archive", {
   )
   unlink(victim)
 
-  updated <- suppressWarnings(round104_generate(
+  updated <- expect_no_warning(round104_generate(
     "omitverse", c(keep, "victi_1.0.0"), destination,
     update = TRUE, on_component_error = "skip"
   ))
@@ -230,7 +230,7 @@ test_that("identified omitted archives are preserved while deliberate removals p
   )
   unlink(c(drop, victim))
 
-  updated <- suppressWarnings(round104_generate(
+  updated <- expect_no_warning(round104_generate(
     "mixedverse", c(keep, missing_victim), destination,
     update = TRUE, on_component_error = "skip"
   ))
@@ -322,6 +322,10 @@ test_that("installer transcripts follow verbose and failures retain ERROR", {
                              collapse = "\n")
   expect_match(generated_install, "base::system2", fixed = TRUE)
   generated_runtime <- new.env(parent = baseenv())
+  # The installer formats its messages with .meta_trf(), which the generated
+  # package defines in utils.R; both files share one namespace at runtime.
+  sys.source(file.path(generated$path, "R", "utils.R"),
+             envir = generated_runtime, keep.source = FALSE)
   generated_install <- sub("base::system2", ".test_system2",
                            generated_install, fixed = TRUE)
   eval(parse(text = generated_install, keep.source = FALSE),

@@ -2,12 +2,19 @@
 
 > **Create custom R metapackages from local packages.**
 
+<!-- badges: start -->
 [![R-CMD-check](https://github.com/sebollin/bigbang/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sebollin/bigbang/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/sebollin/bigbang/graph/badge.svg)](https://app.codecov.io/gh/sebollin/bigbang)
 [![CRAN status](https://www.r-pkg.org/badges/version/bigbang)](https://CRAN.R-project.org/package=bigbang)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/bigbang)](https://CRAN.R-project.org/package=bigbang)
+[![CRAN downloads per month](https://cranlogs.r-pkg.org/badges/bigbang)](https://CRAN.R-project.org/package=bigbang)
 [![r-universe](https://sebollin.r-universe.dev/bigbang/badges/version)](https://sebollin.r-universe.dev/bigbang)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23192961-1682D4.svg)](https://doi.org/10.5281/zenodo.23192961)
+[![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL%20(%3E%3D%203)-142839.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-0D9786.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![docs: español](https://img.shields.io/badge/docs-espa%C3%B1ol-0D9786.svg)](https://github.com/sebollin/bigbang/blob/main/README.es.md)
+<!-- badges: end -->
 
 **bigbang** builds tidyverse-style metapackages from local package archives.
 Every metapackage ends in *-verse*—`tidyverse`, `teamverse`, yours. This package
@@ -39,9 +46,11 @@ set they install, in a single line.
   filename, be listed in a manifest file, or be source directories that bigbang
   builds for you. Identity and version are read from each archive's
   `DESCRIPTION`, not guessed from its name.
-- 🎯 **A curated set, distributed as one** — the metapackage records the exact
-  archive versions it was built from, so the combination you tested is the
-  combination that gets installed.
+- 🎯 **A curated set, distributed as one** — the metapackage records and ships
+  the exact archive versions it was built from. By default a recipient who
+  already has a newer version keeps it; generate with
+  `install_upgrade = "always"` and every installation gets the combination you
+  tested.
 - 📮 **One artifact to hand over** — the component archives travel inside the
   generated metapackage, so `<meta>_install()` works with no arguments and no
   path has to be agreed on between machines.
@@ -71,8 +80,9 @@ The stable version is on CRAN:
 install.packages("bigbang")
 ```
 
-The development version is served as a binary from r-universe, so it needs no
-compilation:
+The development version is on r-universe. This command gets a binary on Windows
+and macOS and the source package elsewhere; bigbang has no compiled code, so
+neither needs a compiler:
 
 ```r
 install.packages("bigbang", repos = c("https://sebollin.r-universe.dev",
@@ -339,6 +349,17 @@ all, so it is a safe way to see what a call would do before it does it. During
 an update it also plans reconciliation of every sibling journal folder and
 reports each path and action without mutating those folders.
 
+The generated `<meta>_deps(plan = TRUE)` is the recipient-side preflight. It
+reads archive `DESCRIPTION` files and installed package metadata without loading
+components, contacting a repository, installing, or writing outside its own
+temporary directory, which it removes on exit. Its `components`
+table reports archive and installed versions, library, action, and reason; its
+`external` table reports missing or unsatisfied external constraints. The
+default `plan = FALSE` return remains the historical dependency vector. Use
+`governance = TRUE` to add English `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and
+the package-inclusion issue template; these files are excluded from the built
+source package and are tracked by `update = TRUE`.
+
 - `on_component_error = "skip"` generates from the components that are valid
   instead of aborting, and reports the ones it left out. The exclusion is
   transitive: a component that depends on an excluded one is excluded too, and
@@ -429,7 +450,11 @@ reports each path and action without mutating those folders.
 
 The generated installer also takes `only` to install a subset — local
 dependencies of the selection are added automatically — and `lib` to choose the
-library it installs into.
+library it installs into. When `lib` is omitted, a component already installed
+in any library on `.libPaths()` counts as installed, and a missing one goes into
+the first library. With an explicit `lib`, only that library counts for the
+components, and every component installation goes there.
+`<meta>_deps(plan = TRUE)` and `install_local_pkg()` follow the same rule.
 
 ## 🧰 Main API
 
@@ -440,16 +465,34 @@ library it installs into.
   packages for historical deletion signatures without loading them.
 
 
-## 🗜️ ZIP files and portability
+## 🗜️ Archives and portability
 
 ZIP archives are classified by content. A ZIP containing `Meta/package.rds` is
 a Windows binary and is installed with `type = "win.binary"` on Windows only.
 Other ZIPs containing DESCRIPTION are unpacked into an owned temporary
 directory and installed as source packages.
 
-All generated text is written explicitly as UTF-8. CI is prepared for R release
-on Windows and macOS and for release, devel, and oldrel on Ubuntu. The declared
-minimum is R 3.6.0, following the minimum of the imported `brio` release.
+bigbang reads every tar and ZIP archive with its own validating reader, not with
+`untar()` or `unzip()`, wherever it opens one: generation, diagnostics, local
+installation, artifact scans and generated installers. The reader creates only
+regular files and directories inside the destination. It rejects links, devices
+and inconsistent layouts, checks CRC-32 and sizes, and stops at the limits set
+by the `bigbang.archive.max_*` options documented in `?scan_bigbang_artifact`.
+
+By default, bigbang also rejects file names that would stop a meta-package from
+installing on Windows: names Windows reserves, such as `aux.R` or `con.R`, names
+containing `< > : " | ? *`, names ending in a dot or a space, and two files whose
+names differ only in case. The error names the file. If every recipient uses
+Linux or macOS, `options(bigbang.archive.portable_names = FALSE)` accepts those
+names wherever the file system can store them, and bigbang warns that the
+package will not install on Windows. The option has no effect on Windows, and
+it never relaxes the safety checks: links, absolute paths, `..`, names made only
+of dots and spaces, control characters and invalid UTF-8 are always rejected.
+
+All generated text is written explicitly as UTF-8. CI checks R release on
+Windows and macOS, and release, devel, oldrel-1 and 4.1 on Ubuntu. The declared
+minimum is R 4.1.0, the minimum of the imported `glue` release, and the 4.1 job
+checks it.
 
 ## 🌎 English and Spanish
 
@@ -481,14 +524,15 @@ considered if `rhelpi18n` becomes production-ready and reaches CRAN.
 
 | Need | Best fit |
 |---|---|
-| Distribute one curated, version-pinned set of local archives as a single installable unit | `bigbang` |
+| Distribute one curated set of local archives, with their versions recorded, as a single installable unit | `bigbang` |
 | A conventional local repository with indexes, multiple packages, and repository semantics | `miniCRAN` or `drat` |
 | A small metapackage around packages already available from repositories | `pkgverse` |
 
 `bigbang` deliberately does not replace a repository manager. If a team needs
 version retention, repository indexes, or dependency distribution to many
 projects, `miniCRAN`/`drat` is the stronger abstraction. `bigbang` is useful
-when the distributed unit is a curated metapackage plus a directory of archives.
+when the distributed unit is one self-contained metapackage that carries its
+component archives.
 
 ## 🛡️ Data-safety history and old artifacts
 
@@ -530,24 +574,25 @@ out of scope.
 
 ## 📖 Citation
 
+Cite the version you used, as R reports it:
+
 ```r
 citation("bigbang")
 ```
 
-```bibtex
-@Manual{bigbang2026,
-  title  = {bigbang: Build 'Tidyverse'-Style Meta-Packages from Local Package Files},
-  author = {Sebastián Lucas},
-  note   = {R package version 0.3.0},
-  year   = {2026},
-  url    = {https://sebollin.github.io/bigbang/},
-}
-```
+For a CRAN installation the entry carries the package DOI assigned by CRAN,
+[10.32614/CRAN.package.bigbang](https://doi.org/10.32614/CRAN.package.bigbang).
+Every release is also archived on Zenodo:
+[10.5281/zenodo.23192961](https://doi.org/10.5281/zenodo.23192961) always
+resolves to the latest version, and each version has its own DOI there for
+citing an exact release.
 
 ## 🔬 Development status
 
 The complete test suite includes unit, portability, i18n, scanner, installation,
-and data-loss regression tests. `R CMD check --as-cran` runs with the PDF manual
-enabled for both `bigbang` and a generated metapackage, on every push, across
-Ubuntu (release, devel, oldrel), Windows, and macOS. win-builder and
-`rhub::rhub_check()` results are reviewed before each CRAN submission.
+and data-loss regression tests. On every push to `main` and on every pull
+request, `R CMD check --as-cran` runs with the PDF manual enabled on Ubuntu
+(R release, devel, oldrel-1, and 4.1, the declared minimum), Windows, and
+macOS, and the suite builds and checks a generated metapackage, PDF manual
+included. win-builder and `rhub::rhub_check()` results are reviewed before each
+CRAN submission.

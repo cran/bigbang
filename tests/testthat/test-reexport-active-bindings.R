@@ -320,7 +320,7 @@ test_that("reexport validates explicit namespace exports and helper plans", {
     .package = "bigbang"
   )
   expect_identical(bigbang:::.bb_generator_version(), "unknown")
-  expect_length(bigbang:::.planned_documentation_files("helperverse"), 20L)
+  expect_length(bigbang:::.planned_documentation_files("helperverse"), 21L)
   expect_error(
     bigbang::create_metapackage(
       "badreexport", system.file("extdata", "toycomponent_0.1.0.tar.gz",
@@ -519,7 +519,7 @@ test_that("non-syntactic and Unicode exports remain installable bindings", {
     length(status), 1L, info = paste(check_output, collapse = "\n")
   )
   expect_false(
-    grepl("ERROR|WARNING", status),
+    round075_check_status(status, check_output),
     info = paste(check_output, collapse = "\n")
   )
   expect_identical(system2(
@@ -842,7 +842,9 @@ test_that("generated installers create a new lib in both startup modes", {
     ), 0L)
     component_library <- file.path(sandbox, paste0(name, "-components"))
     withr::local_libpaths(c(meta_library, .libPaths()))
-    loadNamespace(name)
+    # getNamespace() loads it like loadNamespace(); R 4.1's check of the tests
+    # would read loadNamespace(name) as an undeclared package called 'name'.
+    getNamespace(name)
     installer <- getExportedValue(name, paste0(name, "_install"))
     result <- installer(lib = component_library, verbose = FALSE)
     expect_length(result$failed, 0L)

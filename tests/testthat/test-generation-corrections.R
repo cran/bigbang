@@ -225,7 +225,7 @@ test_that("successful documentation restores the caller session", {
   search_before <- search()
   namespaces_before <- loadedNamespaces()
   cwd_before <- getwd()
-  result <- suppressWarnings(generate_toy_metapackage(
+  result <- expect_no_warning(generate_toy_metapackage(
     "docverse", archives, destination, document = TRUE
   ))
 
@@ -238,6 +238,38 @@ test_that("successful documentation restores the caller session", {
   if (!"devtools_shims" %in% search_before) {
     expect_false("devtools_shims" %in% search())
   }
+})
+
+test_that("generated DESCRIPTION records roxygen only after documentation runs", {
+  skip_on_cran()
+  skip_if_not_installed("devtools")
+  skip_if_not_installed("roxygen2")
+  sandbox <- tempfile("bigbang-roxygen-metadata-")
+  archives <- file.path(sandbox, "archives")
+  destination <- file.path(sandbox, "output")
+  dir.create(destination, recursive = TRUE)
+  copy_toy_archive(archives)
+
+  undocumented <- generate_toy_metapackage(
+    "undocumentedverse", archives, destination, document = FALSE
+  )
+  undocumented_description <- read.dcf(
+    file.path(undocumented$path, "DESCRIPTION")
+  )
+  expect_false("RoxygenNote" %in% colnames(undocumented_description))
+
+  documented <- expect_no_warning(generate_toy_metapackage(
+    "documentedverse", archives, destination, document = TRUE
+  ))
+  documented_description <- read.dcf(
+    file.path(documented$path, "DESCRIPTION")
+  )
+  expect_true(documented$documented)
+  expect_identical(
+    unname(documented_description[1L, "Config/roxygen2/version"]),
+    as.character(utils::packageVersion("roxygen2"))
+  )
+  expect_false("RoxygenNote" %in% colnames(documented_description))
 })
 
 test_that("failed documentation is reported and restores the caller session", {

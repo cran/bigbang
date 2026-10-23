@@ -413,6 +413,15 @@ cualquier versión instalada. <code>force = TRUE</code> equivale a
 <code>options(&lt;meta&gt;.quiet = TRUE)</code>. Si <code>cli</code> no
 está disponible, el mensaje de arranque vuelve al banner ASCII sin
 fallar.</p>
+<p>Antes de instalar en la máquina receptora, consulte el plan de solo
+lectura:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">equipoverse_deps</span>(<span class="at">plan =</span> <span class="cn">TRUE</span>, <span class="at">upgrade =</span> <span class="st">&quot;newer&quot;</span>, <span class="at">cran_deps =</span> <span class="st">&quot;skip&quot;</span>)</span></code></pre></div>
+<p>Lee únicamente los <code>DESCRIPTION</code> de los archivos y los
+metadatos de los paquetes instalados. Informa la versión del archivo, la
+versión y biblioteca instaladas, la acción prevista y las restricciones
+externas faltantes o no satisfechas. No carga, instala, usa la red ni
+escribe en disco. El instalador y este diagnóstico comparten la misma
+evaluación de versiones y de la política <code>upgrade</code>.</p>
 </div>
 <div id="colisiones-de-reexportación" class="section level2">
 <h2>Colisiones de reexportación</h2>
@@ -428,7 +437,9 @@ contra los dueños instalados mediante
 <code>&lt;meta&gt;_install()</code> y
 <code>&lt;meta&gt;_conflicts()</code>.
 <code>&lt;meta&gt;_conflicts()</code> conserva los conflictos de
-enmascaramiento; consulte la verificación de instalación con
+enmascaramiento. En un metapaquete generado con
+<code>reexport = TRUE</code>, consulte la verificación de instalación
+con
 <code>&lt;meta&gt;_reexport_verification(&lt;meta&gt;_conflicts())</code>.</p>
 </div>
 <div id="actualizaciones-interrumpidas-y-recuperación" class="section level2">
@@ -437,7 +448,7 @@ enmascaramiento; consulte la verificación de instalación con
 diario durable junto al proyecto. La actualización siguiente lo revisa
 antes de escribir y <code>dry_run = TRUE</code> muestra la acción
 pendiente. Después de confirmar que no sigue corriendo otra
-actualización, usá <code>recover = TRUE</code> para preservar bytes de
+actualización, use <code>recover = TRUE</code> para preservar bytes de
 usuario desconocidos y completar la recuperación.</p>
 </div>
 <div id="archivos-zip" class="section level2">
@@ -451,7 +462,7 @@ extraen en un directorio temporal propio y se instalan como fuente.</p>
 <h2>Revisar artefactos anteriores</h2>
 <p>El escáner nunca carga el paquete y funciona en fuentes, tarballs,
 ZIP e instalaciones:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">scan_bigbang_artifact</span>(<span class="st">&quot;ruta/al/artefacto&quot;</span>, <span class="at">dry_run =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">scan_bigbang_artifact</span>(<span class="st">&quot;ruta/al/artefacto&quot;</span>, <span class="at">dry_run =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <p>Si detecta firmas V1/V2/V3/V7, no ejecute <code>library()</code>,
 <code>devtools::document()</code> ni hooks del artefacto. Genere una
 versión nueva en una ruta vacía con la versión actual de
@@ -471,9 +482,9 @@ componente también puede ser un directorio fuente, que se empaqueta con
 el paquete opcional <code>pkgbuild</code>, o la lista entera puede vivir
 en un manifiesto bajo control de versiones.</p>
 <p>Dos opciones que conviene conocer antes de generar algo en serio:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>plan <span class="ot">&lt;-</span> <span class="fu">create_metapackage</span>(..., <span class="at">dry_run =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>plan<span class="sc">$</span>order      <span class="co"># el orden de instalación que se usaría</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>plan<span class="sc">$</span>findings   <span class="co"># todos los hallazgos de validación, sin escribir nada</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>plan <span class="ot">&lt;-</span> <span class="fu">create_metapackage</span>(..., <span class="at">dry_run =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>plan<span class="sc">$</span>order      <span class="co"># el orden de instalación que se usaría</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>plan<span class="sc">$</span>findings   <span class="co"># todos los hallazgos de validación, sin escribir nada</span></span></code></pre></div>
 <p><code>dry_run = TRUE</code> no crea el destino. Y
 <code>update = TRUE</code> regenera un proyecto existente en el mismo
 lugar, reescribiendo solo los archivos que bigbang escribió —se niega si
@@ -489,10 +500,11 @@ fijar la política de actualización del instalador emitido.</p>
 <p>Los mensajes de ejecución tienen inglés como fuente y traducción
 completa al español mediante gettext. En R 4.2 o posterior puede usar
 <code>Sys.setLanguage(&quot;es&quot;)</code>; en versiones anteriores, defina
-<code>LANGUAGE=es</code> antes de iniciar R. La ayuda Rd se publica en
-inglés, como requiere CRAN. Cuando <code>rhelpi18n</code> madure y
-llegue a CRAN se evaluará publicar un módulo separado
-<code>bigbang.es</code> para traducir también la ayuda interactiva.</p>
+<code>LANGUAGE=es</code> antes de iniciar R. La ayuda Rd queda en inglés
+porque R no tiene un mecanismo nativo estable para traducirla. Cuando
+<code>rhelpi18n</code> madure y llegue a CRAN se evaluará publicar un
+módulo separado <code>bigbang.es</code> para traducir también la ayuda
+interactiva.</p>
 </div>
 
 
